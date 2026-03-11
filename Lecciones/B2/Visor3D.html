@@ -1,0 +1,432 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 3D - Roboxmaker</title>
+    <!-- Importación de fuentes desde Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- GUÍA DE ESTILO ROBOXMAKER --- */
+        :root {
+            --brand-primary: #636EF7;
+            --brand-secondary: #1E293B;
+            --brand-light: #F1F5F9;
+            --brand-dark: #0F172A;
+            --brand-primary-darker: #4f58d6;
+            --danger-red: #ef4444;
+        }
+
+        body {
+            margin: 0; overflow: hidden; font-family: 'Roboto', sans-serif;
+            background-color: var(--brand-dark); display: flex; flex-direction: column; height: 100vh;
+        }
+
+        header {
+            background-color: white; padding: 12px 24px; border-bottom: 1px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+
+        header h1 {
+            font-family: 'Poppins', sans-serif; color: var(--brand-primary);
+            font-size: 24px; margin: 0;
+        }
+
+        #viewer-container {
+            flex-grow: 1; position: relative; min-height: 0;
+            background-color: var(--brand-light);
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        #view-controls {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .control-btn {
+            background-color: rgba(241, 245, 249, 0.9); border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--brand-secondary); width: 44px; height: 44px;
+            border-radius: 50%; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; background-color: #e2e8f0; }
+        .control-btn:hover:not(:disabled) { background-color: white; }
+        .control-btn:active:not(:disabled) { transform: scale(0.95); }
+        .control-btn svg { 
+            width: 24px; 
+            height: 24px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .ui-button {
+            background-color: rgba(241, 245, 249, 0.9); border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--brand-secondary); width: 44px; height: 44px;
+            border-radius: 8px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .ui-button:hover { background-color: white; }
+        
+        #viewcube-container { 
+            width: 120px; 
+            height: 120px; 
+            margin-bottom: 8px; 
+            position: relative; 
+            cursor: grab;
+            transition: all 0.2s ease-in-out;
+        }
+        #viewcube-container:active { cursor: grabbing; }
+
+        #explode-slider-container {
+            display: none;
+            background-color: rgba(241, 245, 249, 0.9);
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease-in-out;
+        }
+        #explode-slider {
+            -webkit-appearance: none; appearance: none;
+            width: 120px; height: 8px;
+            background: #d1d5db; border-radius: 5px; outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+        #explode-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px;
+            background: var(--brand-primary); cursor: pointer; border-radius: 50%;
+        }
+
+        #fullscreen-btn { position: absolute; bottom: 16px; right: 16px; z-index: 10; }
+
+        #loader-indicator { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+            z-index: 20; background: white; padding: 8px 16px; border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: none;
+        }
+
+        /* Media Queries para responsividad del menú */
+        @media (max-height: 750px) {
+            #view-controls { gap: 6px; }
+            #viewcube-container { width: 100px; height: 100px; margin-bottom: 6px; }
+            .control-btn { width: 40px; height: 40px; }
+            .control-btn svg { width: 22px; height: 22px; }
+            #explode-slider-container { padding: 6px 10px; }
+            #explode-slider { width: 100px; }
+        }
+
+        @media (max-height: 600px) {
+            #view-controls { gap: 4px; top: 8px; left: 8px; }
+            #viewcube-container { width: 80px; height: 80px; margin-bottom: 4px; }
+            .control-btn { width: 36px; height: 36px; }
+            .control-btn svg { width: 20px; height: 20px; }
+            #explode-slider-container { padding: 4px 8px; }
+            #explode-slider { width: 80px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Roboxmaker</h1>
+	</header>
+
+    <div id="viewer-container">
+        <div id="view-controls">
+            <div id="viewcube-container"></div>
+            <button id="home-btn" class="control-btn" title="Vista de Inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+            <button id="fit-view-btn" class="control-btn" title="Ajustar a la Vista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V4h4M4 16v4h4M16 4h4v4M16 20h4v-4"/></svg></button>
+            <button id="zoom-in-btn" class="control-btn" title="Acercar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button id="zoom-out-btn" class="control-btn" title="Alejar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button id="explode-btn" class="control-btn" title="Descomponer Modelo" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </button>
+            <div id="explode-slider-container">
+                <input type="range" id="explode-slider" min="0" max="100" value="0">
+            </div>
+        </div>
+        <button id="fullscreen-btn" title="Pantalla Completa" class="ui-button">
+            <svg id="fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+    </div>
+    
+    <div id="loader-indicator">Cargando...</div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+        import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+        import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        
+        const container = document.getElementById('viewer-container');
+        const loaderIndicator = document.getElementById('loader-indicator');
+        const homeBtn = document.getElementById('home-btn');
+        const fitViewBtn = document.getElementById('fit-view-btn');
+        const zoomInBtn = document.getElementById('zoom-in-btn');
+        const zoomOutBtn = document.getElementById('zoom-out-btn');
+        const viewcubeContainerParent = document.getElementById('view-controls');
+        const explodeBtn = document.getElementById('explode-btn');
+        const explodeSliderContainer = document.getElementById('explode-slider-container');
+        const explodeSlider = document.getElementById('explode-slider');
+
+        let currentObject, isAnimatingCamera = false;
+        let cameraTargetPosition = new THREE.Vector3(), cameraTargetLookAt = new THREE.Vector3();
+        let explodedMeshes = [];
+        
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 5000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.90;
+        container.appendChild(renderer.domElement);
+        
+        const environment = new RoomEnvironment();
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        const envMap = pmremGenerator.fromScene(environment).texture;
+        scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--brand-light').trim());
+        scene.environment = envMap;
+        environment.dispose();
+        pmremGenerator.dispose();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        mainLight.position.set(5, 10, 7.5);
+        scene.add(mainLight);
+        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        bottomLight.position.set(0, -10, 0);
+        scene.add(bottomLight);
+        
+        const controls = new OrbitControls(camera, renderer.domElement); 
+        controls.enableDamping = true;
+
+        const viewcubeContainer = document.getElementById('viewcube-container');
+        const viewcubeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        viewcubeContainerParent.insertBefore(viewcubeContainer, viewcubeContainerParent.firstChild);
+        viewcubeContainer.appendChild(viewcubeRenderer.domElement);
+
+        const viewcubeScene = new THREE.Scene();
+        const viewcubeCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 10);
+        const viewcubeRaycaster = new THREE.Raycaster();
+        const viewcube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), createFaceMaterials());
+        viewcubeScene.add(viewcube);
+        
+        function createTextCanvas(text) {
+            const canvas = document.createElement('canvas'); const context = canvas.getContext('2d');
+            canvas.width = 128; canvas.height = 128;
+            context.fillStyle = 'rgba(241, 245, 249, 0.9)'; context.fillRect(0, 0, 128, 128);
+            context.strokeStyle = 'rgba(0, 0, 0, 0.1)'; context.lineWidth = 2; context.strokeRect(1, 1, 126, 126);
+            context.font = "700 20px Poppins"; context.fillStyle = "#1E293B";
+            context.textAlign = "center"; context.textBaseline = "middle"; context.fillText(text, 64, 64);
+            return canvas;
+        }
+
+        function createFaceMaterials() {
+             return [
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(createTextCanvas('DERECHA')) }),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(createTextCanvas('IZQUIERDA')) }),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(createTextCanvas('SUPERIOR')) }),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(createTextCanvas('INFERIOR')) }),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(createTextCanvas('FRONTAL')) }),
+                new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(createTextCanvas('POSTERIOR')) })
+            ];
+        }
+
+        let isDraggingViewcube = false;
+        const previousMousePosition = { x: 0, y: 0 };
+        const dragStart = { x: 0, y: 0 };
+
+        viewcubeRenderer.domElement.addEventListener('mousedown', (e) => { isDraggingViewcube = true; dragStart.x = e.clientX; dragStart.y = e.clientY; previousMousePosition.x = e.clientX; previousMousePosition.y = e.clientY; });
+        viewcubeRenderer.domElement.addEventListener('mousemove', (e) => {
+            if (!isDraggingViewcube) return;
+            const deltaX = e.clientX - previousMousePosition.x, deltaY = e.clientY - previousMousePosition.y;
+            const factor = 2 * Math.PI / container.clientHeight, offset = camera.position.clone().sub(controls.target);
+            const quatAzimuthal = new THREE.Quaternion().setFromAxisAngle(camera.up, -deltaX * factor); offset.applyQuaternion(quatAzimuthal);
+            const right = new THREE.Vector3().crossVectors(camera.up, offset).normalize();
+            const quatPolar = new THREE.Quaternion().setFromAxisAngle(right, -deltaY * factor); offset.applyQuaternion(quatPolar);
+            camera.position.copy(controls.target).add(offset);
+            previousMousePosition.x = e.clientX; previousMousePosition.y = e.clientY;
+        });
+        viewcubeRenderer.domElement.addEventListener('mouseup', (e) => {
+            const dragDistance = Math.sqrt(Math.pow(e.clientX - dragStart.x, 2) + Math.pow(e.clientY - dragStart.y, 2));
+            if (dragDistance < 5) {
+                const rect = viewcubeRenderer.domElement.getBoundingClientRect();
+                const mouse = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+                viewcubeRaycaster.setFromCamera(mouse, viewcubeCamera);
+                const intersects = viewcubeRaycaster.intersectObject(viewcube);
+                if (intersects.length > 0) {
+                    const normal = intersects[0].face.normal.clone(), dist = camera.position.length();
+                    transitionToView(normal.multiplyScalar(dist), new THREE.Vector3(0,0,0));
+                }
+            }
+            isDraggingViewcube = false;
+        });
+        viewcubeRenderer.domElement.addEventListener('mouseleave', () => { isDraggingViewcube = false; });
+
+        const ktx2Loader = new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/');
+        const dracoLoader = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
+        const gltfLoader = new GLTFLoader().setKTX2Loader(ktx2Loader).setDRACOLoader(dracoLoader).setMeshoptDecoder(MeshoptDecoder);
+
+        // Cargar automáticamente el archivo robot3d.glb
+        function loadInitialModel() {
+            setLoading(true);
+            gltfLoader.load(
+                'robot3d.glb',
+                (gltf) => {
+                    loadModel(gltf.scene);
+                },
+                undefined,
+                (error) => {
+                    console.error('Error al cargar robot3d.glb:', error);
+                    setLoading(false);
+                    alert('Error al cargar el modelo 3D. Verifica que el archivo robot3d.glb esté en la misma carpeta.');
+                }
+            );
+        }
+
+        function loadModel(model) {
+            if (currentObject) scene.remove(currentObject);
+            prepareExplode(model); 
+            frameArea(model, true); 
+            scene.add(model); 
+            currentObject = model;
+            setLoading(false);
+        }
+
+        function prepareExplode(model) {
+            explodedMeshes = [];
+            model.traverse((child) => {
+                if (child.isMesh) explodedMeshes.push(child);
+            });
+            if (explodedMeshes.length > 1) {
+                const modelBox = new THREE.Box3().setFromObject(model);
+                const modelCenter = modelBox.getCenter(new THREE.Vector3());
+                explodedMeshes.forEach(mesh => {
+                    mesh.userData.originalPosition = mesh.getWorldPosition(new THREE.Vector3());
+                    const meshCenter = new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3());
+                    mesh.userData.explodeVector = meshCenter.sub(modelCenter);
+                });
+                explodeBtn.disabled = false;
+            } else {
+                explodeBtn.disabled = true;
+                explodeSliderContainer.style.display = 'none';
+                explodeSlider.value = 0;
+            }
+        }
+
+        function updateExplosion(factor) {
+            if (explodedMeshes.length <= 1) return;
+            explodedMeshes.forEach(mesh => {
+                const offset = mesh.userData.explodeVector.clone().multiplyScalar(factor);
+                const newWorldPosition = mesh.userData.originalPosition.clone().add(offset);
+                if (mesh.parent) mesh.parent.worldToLocal(newWorldPosition);
+                mesh.position.copy(newWorldPosition);
+            });
+        }
+        
+        explodeBtn.addEventListener('click', () => {
+            explodeSliderContainer.style.display = explodeSliderContainer.style.display === 'block' ? 'none' : 'block';
+        });
+        explodeSlider.addEventListener('input', (e) => updateExplosion(e.target.value / 25.0)); 
+
+        function frameArea(object, initialLoad = false) {
+            updateExplosion(0); 
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            object.position.sub(center); 
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let dist = (Math.abs(maxDim / 2 / Math.tan(fov / 2))) * 1.5;
+            if (initialLoad) {
+                camera.position.set(dist / 1.732, dist / 1.732, dist / 1.732);
+            } else {
+                transitionToView(camera.position.clone().normalize().multiplyScalar(dist), new THREE.Vector3(0,0,0));
+            }
+            camera.far = Math.max(dist * 5, 5000); 
+            camera.updateProjectionMatrix(); 
+            controls.target.set(0, 0, 0); 
+            controls.update();
+        }
+
+        function setLoading(isLoading) {
+            loaderIndicator.style.display = isLoading ? 'flex' : 'none';
+        }
+
+        function transitionToView(targetPos, targetLookAt) {
+            cameraTargetPosition.copy(targetPos); cameraTargetLookAt.copy(targetLookAt);
+            isAnimatingCamera = true;
+        }
+        
+        function resizeAll() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+
+            const viewcubeSize = viewcubeContainer.clientWidth;
+            viewcubeCamera.aspect = 1;
+            viewcubeCamera.updateProjectionMatrix();
+            viewcubeRenderer.setSize(viewcubeSize, viewcubeSize);
+        }
+
+        homeBtn.addEventListener('click', () => { const dist = camera.position.length(); transitionToView(new THREE.Vector3(dist/1.732, dist/1.732, dist/1.732), new THREE.Vector3(0,0,0)); });
+        fitViewBtn.addEventListener('click', () => { if (currentObject) frameArea(currentObject); });
+        zoomInBtn.addEventListener('click', () => transitionToView(camera.position.clone().multiplyScalar(0.85), controls.target));
+        zoomOutBtn.addEventListener('click', () => transitionToView(camera.position.clone().multiplyScalar(1.15), controls.target));
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isAnimatingCamera) {
+                camera.position.lerp(cameraTargetPosition, 0.1);
+                controls.target.lerp(cameraTargetLookAt, 0.1);
+                if (camera.position.distanceTo(cameraTargetPosition) < 0.05) {
+                    camera.position.copy(cameraTargetPosition); controls.target.copy(cameraTargetLookAt); isAnimatingCamera = false;
+                }
+            } else { controls.update(); }
+            viewcubeCamera.position.copy(camera.position).sub(controls.target).setLength(5);
+            viewcubeCamera.lookAt(viewcubeScene.position);
+            renderer.render(scene, camera);
+            viewcubeRenderer.render(viewcubeScene, viewcubeCamera);
+        }
+        
+        window.addEventListener('resize', resizeAll);
+        resizeAll();
+        
+        // Cargar el modelo inicial
+        loadInitialModel();
+        animate();
+        
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const fullscreenIcon = document.getElementById('fullscreen-icon');
+        fullscreenBtn.addEventListener('click', () => { if (!document.fullscreenElement) container.requestFullscreen(); else document.exitFullscreen(); });
+        document.addEventListener('fullscreenchange', () => {
+            fullscreenIcon.innerHTML = document.fullscreenElement ? `<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>` : `<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>`;
+        });
+    </script>
+</body>
+</html>
