@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roboxmaker - Panel de Informática</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="lessonsData.js"></script>
+    <style>
+        :root {
+            --brand-primary: #636EF7;
+            --brand-secondary: #1E293B;
+            --brand-light: #F1F5F9;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #F8FAFC;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .lesson-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(99, 110, 247, 0.1), 0 10px 10px -5px rgba(99, 110, 247, 0.04);
+            border-color: var(--brand-primary);
+        }
+
+        .lesson-card.hiding {
+            opacity: 0 !important;
+            transform: scale(0.95) !important;
+            pointer-events: none;
+        }
+
+        .brand-gradient {
+            background: linear-gradient(135deg, #636EF7 0%, #a78bfa 100%);
+        }
+
+        /* Nav Header Actions from Kanban */
+        .header-btn {
+            width: 48px;
+            height: 48px;
+            background-color: var(--brand-white, #FFFFFF);
+            border: 1px solid #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            /* Cambiado a flex explícito */
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--brand-secondary, #1E293B);
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background-color: var(--brand-primary, #636EF7);
+            color: var(--brand-white, #FFFFFF);
+            border-color: var(--brand-primary, #636EF7);
+        }
+
+        .header-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        #notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: #ef4444;
+            color: #FFFFFF;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding-top: 1px;
+        }
+
+        /* Contenedores flotantes (Perfil y Notificaciones) */
+        .floating-panel {
+            display: none;
+            position: absolute;
+            top: 60px;
+            /* Ajustado para nav */
+            right: 0;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            z-index: 3000;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+
+        #profile-card {
+            width: 280px;
+            padding: 24px;
+            text-align: center;
+            overflow: visible;
+        }
+
+        #profile-card-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: #F1F5F9;
+            color: #636EF7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+        }
+
+        #profile-card-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        #profile-name {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1E293B;
+            margin: 0;
+        }
+
+        #profile-role {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin: 0 0 16px 0;
+        }
+
+        #profile-card hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 16px 0;
+        }
+
+        #logout-btn {
+            background-color: #f1f5f9;
+            color: #1E293B;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        #logout-btn:hover {
+            background-color: #e2e8f0;
+        }
+
+        #notification-panel h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            color: #1E293B;
+            padding: 16px;
+            margin: 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        #notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+
+        .notification-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .notification-item p {
+            font-size: 0.9rem;
+            color: #334155;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .notification-item p strong {
+            color: #1E293B;
+        }
+
+        .notification-item .timestamp {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .notification-item.is-unread {
+            background-color: #eef2ff;
+        }
+
+        .notification-item.is-unread:hover {
+            background-color: #e0e7ff;
+        }
+
+        .notification-item.is-unread::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: #636EF7;
+            border-radius: 50%;
+        }
+
+        .no-notifications {
+            padding: 24px;
+            text-align: center;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-[#636EF7]">ROBOX<span class="font-light text-slate-500">MAKER</span></h1>
+            <div class="flex items-center gap-4 relative">
+                <!-- Botón de Notificaciones -->
+                <button id="notification-btn" class="header-btn" title="Notificaciones">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                        fill="currentColor">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path
+                            d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.21 1.79-4 4-4s4 1.79 4 4v6z" />
+                    </svg>
+                    <span id="notification-badge"></span>
+                </button>
+                <!-- Botón de Perfil -->
+                <button id="profile-btn" class="header-btn" title="Perfil de Usuario">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                        fill="currentColor">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-3.84-.68-5.28-1.85.03-.98 3.5-1.63 5.28-1.63s5.25.65 5.28 1.63C15.84 19.32 14.03 20 12 20z" />
+                    </svg>
+                </button>
+
+                <!-- Tarjeta de Perfil -->
+                <div id="profile-card" class="floating-panel">
+                    <div id="profile-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="36px" viewBox="0 0 24 24" width="36px"
+                            fill="currentColor">
+                            <path d="M0 0h24v24H0V0z" fill="none" />
+                            <path
+                                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                    </div>
+                    <h4 id="profile-name">Cargando...</h4>
+                    <p id="profile-role">...</p>
+                    <hr>
+                    <button id="logout-btn">Cerrar Sesión</button>
+                </div>
+
+                <!-- Panel Notificaciones -->
+                <div id="notification-panel" class="floating-panel">
+                    <h3>Notificaciones</h3>
+                    <ul id="notification-list">
+                        <li class="no-notifications">No tienes notificaciones nuevas.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 md:p-10">
+        <header class="mb-12 text-center">
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">Programa de Tecnología Educativa</h2>
+            <p class="text-slate-500">Ruta de Aprendizaje K-12: Construyendo el futuro pieza a pieza.</p>
+        </header>
+
+        <!-- Barra de Búsqueda -->
+        <div class="mb-8 relative w-full md:max-w-2xl" id="searchContainer" style="display: none;">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input type="text" id="lessonSearch"
+                class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#636EF7] focus:border-transparent transition-all duration-300 shadow-sm text-slate-700 font-['Roboto'] placeholder:font-['Roboto'] placeholder:text-slate-400"
+                placeholder="Buscar por título, descripción o código de lección...">
+        </div>
+
+        <div class="mb-6" id="backButtonContainer" style="display: none;">
+            <button id="btnBackToGrades"
+                class="flex items-center text-slate-600 hover:text-[#636EF7] transition-colors font-medium">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Volver a Grados
+            </button>
+        </div>
+
+        <!-- Vista de Grados -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="gradeGrid">
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('K4')">
+                <div
+                    class="w-16 h-16 rounded-full brand-gradient text-white flex items-center justify-center mb-4 shadow-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Kínder 4</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('K5')">
+                <div
+                    class="w-16 h-16 rounded-full brand-gradient text-white flex items-center justify-center mb-4 shadow-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Kínder 5</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('PP')">
+                <div
+                    class="w-16 h-16 rounded-full brand-gradient text-white flex items-center justify-center mb-4 shadow-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Pre-Primaria</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria1')">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">1°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 1</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria2')">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">2°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 2</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria3')">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">3°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 3</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria4')">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">4°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 4</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria5')">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">5°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 5</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria6')">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">6°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 6</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Secundaria1')">
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">I</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Secundaria 1</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Secundaria2')">
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">II</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Secundaria 2</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Secundaria3')">
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">III</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Secundaria 3</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('B1')">
+                <div
+                    class="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">B1</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Bachillerato 1</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('B2')">
+                <div
+                    class="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">B2</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Bachillerato 2</h3>
+            </div>
+
+        </div>
+
+        <!-- Vista de Lecciones (Oculta por defecto) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="lessonGrid" style="display: none;">
+            <!-- Renderizado dinámicamente desde lessonsData.js -->
+        </div>
+    </main>
+
+    <script>
+        let currentActiveGrade = null;
+
+        function showLessons(grade) {
+            currentActiveGrade = grade;
+            const gradeGrid = document.getElementById('gradeGrid');
+            const lessonGrid = document.getElementById('lessonGrid');
+            const searchContainer = document.getElementById('searchContainer');
+            const backButtonContainer = document.getElementById('backButtonContainer');
+            const searchInput = document.getElementById('lessonSearch');
+
+            // Limpiar búsqueda y DOM anterior
+            searchInput.value = '';
+            lessonGrid.innerHTML = '';
+
+            // Ocultar grados
+            gradeGrid.style.display = 'none';
+
+            // Mostrar controles
+            searchContainer.style.display = 'block';
+            backButtonContainer.style.display = 'block';
+            lessonGrid.style.display = 'grid';
+
+            // Obtener array de lecciones de lessonsData.js
+            const gradeLessons = (typeof LESSONS_DATABASE !== 'undefined' && LESSONS_DATABASE[grade])
+                ? LESSONS_DATABASE[grade]
+                : [];
+
+            if (gradeLessons.length === 0) {
+                lessonGrid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-10">No se encontraron lecciones para este grado.</p>';
+            }
+
+            const svgClass = "w-16 h-16 text-white opacity-20 absolute top-4 right-4";
+            const categoryIcons = {
+                "Pensamiento Computacional": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>`,
+                "Creatividad y Diseno Digital": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>`,
+                "Herramientas de Productividad": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`,
+                "Ciudadania Digital": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>`
+            };
+            const defaultIcon = `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+
+            // Renderizar tarjetas
+            gradeLessons.forEach(lesson => {
+                const titleToDisplay = lesson.title || lesson.id || "Lección";
+                const codeToDisplay = lesson.code || lesson.id;
+                const iconSvg = categoryIcons[lesson.category] || defaultIcon;
+
+                // Construir HTML de tarjeta
+                const cardHTML = `
+                <div class="lesson-card lesson-item bg-white rounded-2xl overflow-hidden cursor-pointer flex flex-col"
+                    data-title="${titleToDisplay.toLowerCase()}" 
+                    data-desc="${lesson.description.toLowerCase()}" 
+                    data-code="${codeToDisplay.toLowerCase()}"
+                    onclick="window.location.href='${lesson.path}'">
+                    
+                    <div class="h-40 brand-gradient p-6 flex flex-col justify-end relative shrink-0">
+                        ${iconSvg}
+                        <div class="mt-auto self-start">
+                            <span class="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block">
+                                ${lesson.unidad}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2 leading-tight">${titleToDisplay}</h3>
+                            <p class="text-slate-600 text-sm mb-4 line-clamp-2">${lesson.description}</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+                            <span class="text-[var(--brand-primary)] font-semibold text-sm">Lección ${codeToDisplay}</span>
+                            <div class="flex items-center text-slate-400 text-xs font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                ${lesson.duracion}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                lessonGrid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        function showGrades() {
+            currentActiveGrade = null;
+            const gradeGrid = document.getElementById('gradeGrid');
+            const lessonGrid = document.getElementById('lessonGrid');
+            const searchContainer = document.getElementById('searchContainer');
+            const backButtonContainer = document.getElementById('backButtonContainer');
+
+            // Mostrar grados
+            gradeGrid.style.display = 'grid';
+
+            // Ocultar todo lo demás
+            searchContainer.style.display = 'none';
+            backButtonContainer.style.display = 'none';
+            lessonGrid.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configuración de Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyBdzAnW_PjYGFTTbAiZEnrco7odFRg27nU",
+                authDomain: "roboxmaker-board.firebaseapp.com",
+                projectId: "roboxmaker-board",
+                storageBucket: "roboxmaker-board.appspot.com",
+                messagingSenderId: "446553437793",
+                appId: "1:446553437793:web:6a48927215e4794bc3dc20"
+            };
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.firestore();
+            const auth = firebase.auth();
+            const usersCollection = db.collection('users');
+            const notificationsCollection = db.collection('notifications');
+
+            const profileBtn = document.getElementById('profile-btn');
+            const profileCard = document.getElementById('profile-card');
+            const notificationBtn = document.getElementById('notification-btn');
+            const notificationPanel = document.getElementById('notification-panel');
+            const notificationBadge = document.getElementById('notification-badge');
+            const notificationList = document.getElementById('notification-list');
+            const logoutBtn = document.getElementById('logout-btn');
+            const searchInput = document.getElementById('lessonSearch');
+            const btnBackToGrades = document.getElementById('btnBackToGrades');
+
+            // Autenticación
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    try {
+                        const userDoc = await usersCollection.doc(user.uid).get();
+                        const userName = userDoc.exists && userDoc.data().name ? userDoc.data().name : user.email.split('@')[0];
+                        const userProfile = userDoc.exists ? (userDoc.data().profile || userDoc.data().role || 'Docente') : 'Docente';
+
+                        document.getElementById('profile-name').textContent = userName;
+                        document.getElementById('profile-role').textContent = userProfile;
+                    } catch (e) {
+                        console.error("Error al obtener perfil usuario: ", e);
+                        document.getElementById('profile-name').textContent = user.email.split('@')[0];
+                        document.getElementById('profile-role').textContent = "Usuario";
+                    }
+                    listenForNotifications(user.uid);
+                } else {
+                    window.location.href = 'index.html'; // Redirigir si no hay sesión
+                }
+            });
+
+            // Cerrar Sesión
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut();
+            });
+
+            // Lógica UI de Botones Notificaciones/Perfil
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationPanel.style.display = 'none';
+                profileCard.style.display = profileCard.style.display === 'block' ? 'none' : 'block';
+            });
+
+            notificationBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileCard.style.display = 'none';
+                notificationPanel.style.display = notificationPanel.style.display === 'block' ? 'none' : 'block';
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileCard.contains(e.target) && !profileBtn.contains(e.target) && profileCard.style.display === 'block') {
+                    profileCard.style.display = 'none';
+                }
+                if (!notificationPanel.contains(e.target) && !notificationBtn.contains(e.target) && notificationPanel.style.display === 'block') {
+                    notificationPanel.style.display = 'none';
+                }
+            });
+
+            // Funciones Notificaciones (Clonadas de Kanban)
+            let unsubscribeNotifications = null;
+            function listenForNotifications(userId) {
+                if (unsubscribeNotifications) unsubscribeNotifications();
+
+                unsubscribeNotifications = notificationsCollection
+                    .where('assignedTo', '==', userId)
+                    .where('read', '==', false)
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot(snapshot => {
+                        let unreadCount = snapshot.size;
+
+                        if (unreadCount > 0) {
+                            notificationBadge.textContent = unreadCount;
+                            notificationBadge.style.display = 'flex';
+                        } else {
+                            notificationBadge.style.display = 'none';
+                        }
+
+                        notificationList.innerHTML = '';
+                        if (snapshot.empty) {
+                            notificationList.innerHTML = '<li class="no-notifications">No tienes notificaciones nuevas.</li>';
+                        }
+
+                        snapshot.forEach(doc => {
+                            const notif = doc.data();
+
+                            const li = document.createElement('li');
+                            li.className = 'notification-item is-unread';
+                            li.dataset.id = doc.id;
+                            li.dataset.taskId = notif.taskId;
+                            li.dataset.projectId = notif.projectId;
+                            li.dataset.projectName = notif.projectName;
+
+                            let dateStr = "Hace un momento";
+                            if (notif.createdAt) {
+                                const diff = (new Date() - notif.createdAt.toDate()) / 1000;
+                                if (diff < 60) dateStr = "Hace un momento";
+                                else if (diff < 3600) dateStr = `Hace ${Math.floor(diff / 60)} min`;
+                                else if (diff < 86400) dateStr = `Hace ${Math.floor(diff / 3600)}h`;
+                                else dateStr = `Hace ${Math.floor(diff / 86400)}d`;
+                            }
+
+                            li.innerHTML = `
+                                <p><strong>${notif.createdByName || 'Un usuario'}</strong> te asignó la tarea: <strong>${notif.taskTitle || 'Tarea sin título'}</strong></p>
+                                <span class="timestamp">${dateStr} en ${notif.projectName || 'Proyecto'}</span>
+                            `;
+                            notificationList.appendChild(li);
+                        });
+
+                    }, error => {
+                        console.error("Error escuchando notificaciones:", error);
+                    });
+            }
+
+            notificationList.addEventListener('click', (e) => {
+                const item = e.target.closest('.notification-item');
+                if (!item) return;
+
+                const notifId = item.dataset.id;
+                const projId = item.dataset.projectId;
+                const projName = item.dataset.projectName;
+
+                // Marcar como leída
+                if (item.classList.contains('is-unread')) {
+                    notificationsCollection.doc(notifId).update({ read: true })
+                        .catch(err => console.error("Error al marcar notif como leída:", err));
+                }
+
+                // Navegar al kanban
+                if (projId && projName) {
+                    window.location.href = `kanban.html?proyecto_id=${encodeURIComponent(projId)}&proyecto_nombre=${encodeURIComponent(projName)}`;
+                }
+
+                notificationPanel.style.display = 'none';
+            });
+
+            // Resto del Dom Lógica de dashboard
+            btnBackToGrades.addEventListener('click', showGrades);
+
+            searchInput.addEventListener('input', function (e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const allLessonItems = document.querySelectorAll('.lesson-item');
+
+                allLessonItems.forEach(card => {
+                    const title = card.getAttribute('data-title') || '';
+                    const desc = card.getAttribute('data-desc') || '';
+                    const code = card.getAttribute('data-code') || '';
+
+                    if (title.includes(searchTerm) || desc.includes(searchTerm) || code.includes(searchTerm)) {
+                        card.classList.remove('hiding');
+                        setTimeout(() => { card.style.display = ''; }, 50);
+                    } else {
+                        card.classList.add('hiding');
+                        setTimeout(() => { card.style.display = 'none'; }, 300);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
