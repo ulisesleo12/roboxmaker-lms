@@ -40,21 +40,24 @@ foreach ($grade in $grades) {
         # Strip HTML tags from description just in case
         $description = [regex]::Replace($description, '<[^>]+>', '')
 
-        # Category Inference (Pensamiento Computacional, Creatividad y Diseno Digital, Herramientas de Productividad, Ciudadania Digital)
-        $steamCategory = "Pensamiento Computacional" # Default fallback
+        # Category Inference (Nuevos 5 Pilares Transversales)
+        $steamCategory = "Logica y Pensamiento Computacional" # Default fallback
         $combinedText = "$displayTitle $description"
         
-        if ($combinedText -match '(?i)program|robot|l.gica|c.digo|algoritmo|secuenci|instrucci|matem.tic|resolver|problem|circuit|sensor|motor|engranaje|m.quina|tecnolog|comput|dron|f.sica|energ.a|constru') {
-            $steamCategory = "Pensamiento Computacional"
+        if ($combinedText -match '(?i)integrador|laboratorio|veh.cul|funcional|grafic|publicidad|proyecto.final|steam') {
+            $steamCategory = "Laboratorio STEAM"
         }
-        elseif ($combinedText -match '(?i)arte|dibuj|dise.|creativid|color|m.sica|historia|relato|cuento|pintura|animar|modelad|3d|mitolog|civilizaci|f.bula|literatura|simetr.a') {
+        elseif ($combinedText -match '(?i)program|bloque|python|algoritmo|condicional|l.gica|secuenci|error|debug|c.digo|matem.tic|comput|circuit|sensor') {
+            $steamCategory = "Logica y Pensamiento Computacional"
+        }
+        elseif ($combinedText -match '(?i)mec.nic|m.quina|simple|estructur|polea|motor|impresi.n|3D|prototip|imprimir|constru|maker|f.sica|energ.a') {
+            $steamCategory = "Ingenieria y Movimiento Maker"
+        }
+        elseif ($combinedText -match '(?i)multimedia|video|web|org.nic|pixel|IA|generativ|logo|arte|dise.o|dibuj|color|pint|anim|m.sica') {
             $steamCategory = "Creatividad y Diseno Digital"
         }
-        elseif ($combinedText -match '(?i)escritura|texto|herramienta|procesador|documento|calcular|tabla|gr.fico|presentaci.n|manual|instruccional|noticia') {
-            $steamCategory = "Herramientas de Productividad"
-        }
-        elseif ($combinedText -match '(?i)internet|seguridad|ciberseguridad|red|compartir|regla|comportamient|huella|digital|responsabilidad|privacidad|ciudadan|comunidad|sociedad|derecho|normas|se.al|familia|vivienda|pa.s') {
-            $steamCategory = "Ciudadania Digital"
+        elseif ($combinedText -match '(?i)productividad|seguridad|ciberseguridad|huella|netiqueta|alfabeti|documento|tabla|ciudadan|internet|privacidad|comunidad|red|simulacro|debate|sociedad|derecho') {
+            $steamCategory = "Alfabetizacion y Ciudadania Digital"
         }
 
         $lessonObj = @{
