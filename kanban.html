@@ -1,0 +1,1432 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero Kanban v6.1 - Roboxmaker</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <style>
+        :root {
+            --brand-primary: #636EF7; --brand-secondary: #1E293B; --brand-light: #F1F5F9;
+            --brand-white: #FFFFFF; --brand-text: #334155; --brand-text-light: #64748b;
+            --brand-primary-darker: #4f58d6; --danger-red: #ef4444; --danger-red-darker: #dc2626; 
+            --warning-orange: #f97316; --success-green: #22c55e;
+            --brand-primary-lightest: #eef2ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Roboto', sans-serif; background-color: var(--brand-light); color: var(--brand-text); 
+            line-height: 1.6; padding: 24px; 
+            display: grid; 
+            grid-template-rows: 1fr auto; 
+            min-height: 100vh;
+            margin: 0; 
+        }
+        
+        .header { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            position: relative; 
+            text-align: center; margin-bottom: 32px; flex-shrink: 0; 
+        }
+        .header img { 
+            height: 80px; width: auto; display: inline-block; 
+        }
+
+        .header-actions {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-btn {
+            width: 48px; height: 48px;
+            background-color: var(--brand-white);
+            border: 1px solid #e2e8f0;
+            border-radius: 50%;
+            display: none; /* Oculto por defecto, se muestra con JS */
+            align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--brand-secondary);
+            position: relative;
+        }
+        .header-btn:hover {
+            background-color: var(--brand-primary);
+            color: var(--brand-white);
+            border-color: var(--brand-primary);
+        }
+        .header-btn svg { width: 24px; height: 24px; }
+
+        #notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: var(--danger-red);
+            color: var(--brand-white);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: none; /* Oculto hasta que haya notificaciones */
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding-top: 1px;
+        }
+        
+        /* Contenedores flotantes (Perfil y Notificaciones) */
+        .floating-panel {
+            display: none;
+            position: absolute;
+            top: 90px; /* Debajo del header */
+            right: 0;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: var(--brand-white);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 3000;
+            text-align: left;
+        }
+        
+        #profile-card {
+            width: 280px;
+            padding: 24px;
+            text-align: center;
+            overflow: visible; /* No necesita scroll */
+        }
+        #profile-card-icon {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background-color: var(--brand-light);
+            color: var(--brand-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+        }
+        #profile-card-icon svg { width: 36px; height: 36px; }
+        #profile-name {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--brand-secondary);
+            margin: 0;
+        }
+        #profile-role {
+            font-size: 0.9rem;
+            color: var(--brand-text-light);
+            margin: 0 0 16px 0;
+        }
+        #profile-card hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 16px 0;
+        }
+        #logout-btn {
+            background-color: #f1f5f9;
+            color: var(--brand-secondary);
+            border: none;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #logout-btn:hover {
+            background-color: #e2e8f0;
+        }
+        
+        #notification-panel h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            color: var(--brand-secondary);
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        #notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .notification-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+        .notification-item:hover {
+            background-color: #f8fafc;
+        }
+        .notification-item p {
+            font-size: 0.9rem;
+            color: var(--brand-text);
+            margin: 0;
+            line-height: 1.4;
+        }
+        .notification-item p strong {
+            color: var(--brand-secondary);
+        }
+        .notification-item .timestamp {
+            font-size: 0.75rem;
+            color: var(--brand-text-light);
+        }
+        .notification-item.is-unread {
+            background-color: var(--brand-primary-lightest);
+        }
+        .notification-item.is-unread:hover {
+            background-color: #e0e7ff;
+        }
+        .notification-item.is-unread::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: var(--brand-primary);
+            border-radius: 50%;
+        }
+        .no-notifications {
+            padding: 24px;
+            text-align: center;
+            color: var(--brand-text-light);
+        }
+        
+
+        .page-title { font-family: 'Poppins', sans-serif; color: var(--brand-secondary); text-align: center; margin-bottom: 24px; font-size: 2rem;}
+
+        .main-content { 
+            width: 100%; 
+        }
+        
+        /* --- Control de Vistas --- */
+        #login-view { display: block; }
+        #app-view { display: none; } 
+        #projects-view { display: block; } 
+        #kanban-view { display: none; }
+
+        /* --- Estilos Vista Login --- */
+        #login-view {
+            max-width: 400px;
+            margin: 4rem auto;
+            padding: 32px;
+            background-color: var(--brand-white);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        #login-view h2 {
+             font-family: 'Poppins', sans-serif; color: var(--brand-secondary);
+             text-align: center; margin-bottom: 24px; font-size: 1.8rem;
+        }
+        #login-error {
+            background-color: #fee2e2; color: var(--danger-red-darker);
+            padding: 10px; border-radius: 8px; margin-bottom: 16px;
+            font-size: 0.9rem; text-align: center; display: none;
+        }
+        #login-form button[type="submit"] {
+            width: 100%; padding: 12px; background-color: var(--brand-primary); color: var(--brand-white); 
+            border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; 
+            transition: background-color 0.2s ease; margin-top: 16px; 
+        }
+         #login-form button[type="submit"]:hover { background-color: var(--brand-primary-darker); }
+
+
+        /* --- Estilos Vista de Proyectos --- */
+        #project-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .project-card {
+            background-color: var(--brand-white); padding: 24px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 4px solid var(--brand-primary);
+            position: relative;
+        }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .project-card h3 { font-family: 'Poppins', sans-serif; color: var(--brand-secondary); font-size: 1.3rem; margin: 0; padding-right: 60px; }
+        .project-card-actions {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; gap: 12px; opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .project-card:hover .project-card-actions { opacity: 1; }
+        .project-action-btn { background: none; border: none; cursor: pointer; padding: 0; color: #94a3b8; transition: color 0.2s ease; }
+        .project-action-btn.edit:hover { color: var(--brand-primary); }
+        .project-action-btn.delete:hover { color: var(--danger-red); }
+        .project-action-btn svg { width: 20px; height: 20px; pointer-events: none; }
+
+
+        .kanban-header { display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 24px; }
+        #back-to-projects-btn {
+            position: absolute; left: 0; background-color: var(--brand-primary); color: var(--brand-white);
+            border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500;
+            display: flex; align-items: center; gap: 8px; transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        #back-to-projects-btn:hover { background-color: var(--brand-primary-darker); transform: scale(1.05); }
+        #kanban-board { display: flex; gap: 24px; justify-content: center; align-items: flex-start; overflow-x: auto; padding-bottom: 24px; }
+        .kanban-column { background-color: var(--brand-white); border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); width: 320px; flex-shrink: 0; display: flex; flex-direction: column; }
+        .kanban-column h2 { font-family: 'Poppins', sans-serif; color: var(--brand-secondary); font-size: 1.2rem; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+        .column-title-icon { width: 22px; height: 22px; color: var(--brand-primary); }
+        .tasks { padding: 20px; min-height: 200px; flex-grow: 1; }
+        
+        .task { 
+            background-color: #f8fafc; border: 1px solid #e2e8f0; 
+            border-left: 4px solid;
+            padding: 12px 16px; margin-bottom: 12px; border-radius: 8px; cursor: grab; 
+            transition: all 0.2s ease-in-out; display: flex; flex-direction: column; position: relative; 
+        }
+
+        .task.status-todo { border-left-color: var(--danger-red); }
+        .task.status-doing { border-left-color: var(--warning-orange); }
+        .task.status-done { border-left-color: var(--success-green); }
+
+        .task.is-completed { 
+            border-left-color: var(--brand-primary) !important; 
+            background-color: var(--brand-primary-lightest); 
+        }
+        
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+        .task h4 { font-weight: 500; color: var(--brand-secondary); flex-grow: 1; padding-right: 10px; }
+        .task-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s ease; }
+        .task:hover .task-actions { opacity: 1; }
+        .task-action-btn { background: none; border: none; cursor: pointer; padding: 0; color: #94a3b8; transition: color 0.2s ease; }
+        .task-action-btn.delete:hover { color: var(--danger-red); }
+        .task-action-btn.complete:hover { color: var(--success-green); }
+        .task-action-btn.un-complete:hover { color: var(--warning-orange); }
+        .task-action-btn svg { width: 18px; height: 18px; pointer-events: none; }
+        
+        .task-description { 
+            font-size: 0.9rem; color: var(--brand-text-light); word-break: break-word;
+            max-height: 60px;
+            overflow: hidden;
+            position: relative;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .task.is-expanded .task-description {
+            max-height: 1000px;
+        }
+        .task-description.collapsible::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to top, #f8fafc, transparent);
+        }
+        .task.is-expanded .task-description.collapsible::after {
+            display: none;
+        }
+
+        .toggle-description-btn {
+            background: none; border: none; color: var(--brand-primary); font-weight: 500;
+            cursor: pointer; margin-top: 8px; align-self: flex-start; font-size: 0.8rem;
+        }
+        
+        .task-description ul, .task-description ol {
+            padding-left: 1.25rem;
+            list-style-position: outside;
+        }
+
+        .task-footer {
+            margin-top: 12px; font-size: 0.8rem; color: var(--brand-text-light);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .task-responsible { font-weight: 500; color: var(--brand-secondary); }
+        .task-dates { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .ghost { opacity: 0.4; background: #cbd5e1; border: 2px dashed var(--brand-primary); }
+        
+        #action-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: var(--brand-primary); color: var(--brand-white); border: none; border-radius: 50%; font-size: 2.5rem; line-height: 55px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer; transition: all 0.2s ease; z-index: 1000; }
+        #action-btn:hover { background-color: var(--brand-primary-darker); transform: scale(1.05); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(30, 41, 59, 0.5); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
+        .modal-container { 
+            background-color: var(--brand-white); padding: 24px; border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px;
+            display: flex; flex-direction: column;
+            max-height: 85vh;
+        }
+        .modal-container h3 { font-family: 'Poppins', sans-serif; color: var(--brand-secondary); font-size: 1.5rem; margin-bottom: 20px; flex-shrink: 0; }
+        .modal-container form {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 12px;
+            margin-right: -12px;
+        }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 500; margin-bottom: 6px; color: var(--brand-text); }
+        input, select { 
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; 
+            font-family: 'Roboto', sans-serif; font-size: 1rem;
+            background-color: var(--brand-white); /* Fondo blanco para select */
+        }
+        .modal-container button[type="submit"] { 
+            width: 100%; padding: 12px; background-color: var(--brand-primary); color: var(--brand-white); 
+            border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; 
+            transition: background-color 0.2s ease; margin-top: 16px; flex-shrink: 0;
+        }
+        .modal-container button[type="submit"]:hover { background-color: var(--brand-primary-darker); }
+        
+        .rich-text-editor {
+            border: 1px solid #cbd5e1; border-radius: 8px; min-height: 120px;
+            padding: 10px; font-size: 1rem; outline: none; transition: box-shadow 0.2s ease-in-out;
+            background-color: var(--brand-white);
+        }
+        .rich-text-editor:focus-within { box-shadow: 0 0 0 2px var(--brand-primary); }
+        .rich-text-editor:empty:before { content: attr(placeholder); color: #94a3b8; pointer-events: none; }
+        
+        .rich-text-editor ul, .rich-text-editor ol {
+            padding-left: 1.25rem;
+            list-style-position: outside;
+        }
+
+        .rich-text-toolbar {
+            display: flex; gap: 4px; background-color: #f1f5f9; border-radius: 8px;
+            padding: 6px; margin-bottom: 8px;
+        }
+        .rich-text-toolbar button {
+            background: none; border: none; width: 32px; height: 32px;
+            border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--brand-secondary);
+        }
+        .rich-text-toolbar button:hover { background-color: #e2e8f0; }
+        .rich-text-toolbar button svg { width: 20px; height: 20px; }
+        
+        #confirmation-modal .modal-container { max-height: initial; }
+        #confirmation-modal .modal-body { margin-bottom: 24px; color: var(--brand-text-light); }
+        #confirmation-modal .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 500; font-size: 1rem; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+        #confirm-btn { background-color: var(--danger-red); color: var(--brand-white); }
+        #confirm-btn:hover { background-color: var(--danger-red-darker); }
+        #cancel-btn { background-color: #e2e8f0; color: var(--brand-secondary); }
+        #cancel-btn:hover { background-color: #cbd5e1; }
+        
+        .main-footer {
+            /* flex-shrink: 0; */ /* Eliminado */
+            padding-top: 24px;
+            margin-top: 48px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: var(--brand-text-light);
+            font-size: 0.875rem;
+        }
+        .main-footer p { margin-bottom: 8px; }
+        .main-footer .confidential-message {
+            font-style: italic;
+            font-size: 0.8rem;
+        }
+
+        /* --- Estilos de Roles --- */
+        .admin-only { display: none !important; }
+        .admin-view .admin-only { display: flex !important; }
+        /* El botón de acción '+' se muestra para todos ahora */
+        /* .admin-view #action-btn.admin-only { display: block !import */
+        .admin-view .form-group.admin-only { display: block !important; }
+
+
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <header class="header">
+            <img src="https://www.grupoaker.com/logorobox.png" alt="Logo Roboxmaker">
+             <div class="header-actions">
+                <!-- Botón de Notificaciones -->
+                <button id="notification-btn" class="header-btn" title="Notificaciones" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.21 1.79-4 4-4s4 1.79 4 4v6z"/></svg>
+                    <span id="notification-badge"></span>
+                </button>
+                <!-- Botón de Perfil -->
+                <button id="profile-btn" class="header-btn" title="Perfil de Usuario" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-3.84-.68-5.28-1.85.03-.98 3.5-1.63 5.28-1.63s5.25.65 5.28 1.63C15.84 19.32 14.03 20 12 20z"/></svg>
+                </button>
+            </div>
+
+            <!-- Tarjeta de Perfil Flotante -->
+            <div id="profile-card" class="floating-panel">
+                <div id="profile-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="36px" viewBox="0 0 24 24" width="36px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </div>
+                <h4 id="profile-name">Nombre de Usuario</h4>
+                <p id="profile-role">Rol</p>
+                <hr>
+                <button id="logout-btn">Cerrar Sesión</button>
+            </div>
+            
+             <!-- Panel de Notificaciones Flotante -->
+            <div id="notification-panel" class="floating-panel">
+                <h3>Notificaciones</h3>
+                <ul id="notification-list">
+                    <!-- Las notificaciones se cargarán aquí -->
+                    <li class="no-notifications">No tienes notificaciones nuevas.</li>
+                </ul>
+            </div>
+        </header>
+
+        <!-- Vista de Login -->
+        <div id="login-view">
+            <h2>Iniciar Sesión</h2>
+            <div id="login-error"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Correo Electrónico (Usuario)</label>
+                    <input type="email" id="email" value="" required> <!-- CORRECCIÓN AQUÍ -->
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" value="" required>
+                </div>
+                <button type="submit">Entrar</button> 
+            </form>
+        </div>
+
+        <!-- Vista Principal de la App (oculta inicialmente) -->
+        <div id="app-view">
+            <div id="projects-view">
+                <h2 class="page-title">Proyectos</h2>
+                <div id="project-list"></div>
+            </div>
+
+            <div id="kanban-view">
+                <div class="kanban-header">
+                    <button id="back-to-projects-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+                        Proyectos
+                    </button>
+                    <h2 id="kanban-project-title" class="page-title"></h2>
+                </div>
+                <main id="kanban-board">
+                    <div class="kanban-column">
+                        <h2><svg class="column-title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span>TO DO</span></h2>
+                        <div class="tasks" id="todo"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <h2><svg class="column-title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" /></svg><span>DOING</span></h2>
+                        <div class="tasks" id="doing"></div>
+                    </div>
+                    <div class="kanban-column">
+                        <h2><svg class="column-title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>DONE</span></h2>
+                        <div class="tasks" id="done"></div>
+                    </div>
+                </main>
+            </div>
+
+            <button id="action-btn" title="Agregar">+</button>
+        </div>
+    </div>
+    
+    <!-- **** MODALES MOVIDOS FUERA DE .main-content y #app-view **** -->
+    
+    <div id="add-task-modal-overlay" class="modal-overlay"> <div class="modal-container"> <h3>Añadir Nueva Tarea</h3> <form id="add-task-form"> <div class="form-group"><label for="task-title">Título</label><input type="text" id="task-title" required></div><div class="form-group"><label for="task-description">Descripción</label><div class="rich-text-toolbar" id="add-task-toolbar"><button type="button" data-command="bold" title="Negrita"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg></button><button type="button" data-command="italic" title="Cursiva"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4h-8z"/></svg></button><button type="button" data-command="insertUnorderedList" title="Viñetas"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg></button><button type="button" data-command="insertOrderedList" title="Numerada"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 11.9V11H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg></button><button type="button" data-command="createLink" title="Enlace"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-8 6c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1zm4 0c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1z"/></svg></button></div><div id="task-description" class="rich-text-editor" contenteditable="true" placeholder="Añadir más detalles..."></div></div><div class="form-group"><label for="task-responsible">Responsable</label><select id="task-responsible" required><option value="">Cargando usuarios...</option></select></div><button type="submit">Guardar Tarea</button> </form> </div> </div>
+    <div id="add-project-modal-overlay" class="modal-overlay"> <div class="modal-container"> <h3>Añadir Nuevo Proyecto</h3> <form id="add-project-form"> <div class="form-group"><label for="project-name">Nombre del Proyecto</label><input type="text" id="project-name" required></div><button type="submit">Crear Proyecto</button> </form> </div> </div>
+    <div id="edit-project-modal-overlay" class="modal-overlay"> <div class="modal-container"> <h3>Editar Proyecto</h3> <form id="edit-project-form"> <div class="form-group"><label for="edit-project-name">Nombre del Proyecto</label><input type="text" id="edit-project-name" required></div><button type="submit">Guardar Cambios</button> </form> </div> </div>
+    <div id="edit-task-modal-overlay" class="modal-overlay"> 
+        <div class="modal-container"> 
+            <h3>Editar Tarea</h3> 
+            <form id="edit-task-form"> 
+                <div class="form-group"><label for="edit-task-title">Título</label><input type="text" id="edit-task-title" required></div>
+                <div class="form-group">
+                    <label for="edit-task-description">Descripción</label>
+                    <div class="rich-text-toolbar" id="edit-task-toolbar">
+                        <button type="button" data-command="bold" title="Negrita"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg></button>
+                        <button type="button" data-command="italic" title="Cursiva"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4h-8z"/></svg></button>
+                        <button type="button" data-command="insertUnorderedList" title="Viñetas"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg></button>
+                        <button type="button" data-command="insertOrderedList" title="Numerada"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 11.9V11H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg></button>
+                        <button type="button" data-command="createLink" title="Enlace"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-8 6c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1zm4 0c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1z"/></svg></button>
+                    </div>
+                    <div id="edit-task-description" class="rich-text-editor" contenteditable="true" placeholder="Añadir más detalles..."></div>
+                </div>
+                <div class="form-group admin-only" style="display: none;"> <!-- Campo solo para Admin -->
+                    <label for="edit-task-createdAt">Fecha de Creación (Admin)</label>
+                    <input type="date" id="edit-task-createdAt">
+                </div>
+                <div class="form-group">
+                    <label for="edit-task-responsible">Responsable</label>
+                    <select id="edit-task-responsible" required>
+                        <option value="">Cargando usuarios...</option>
+                    </select>
+                </div>
+                <button type="submit">Guardar Cambios</button> 
+            </form> 
+        </div> 
+    </div>
+    <div id="confirmation-modal-overlay" class="modal-overlay"> <div id="confirmation-modal" class="modal-container"> <h3 id="confirmation-title">Confirmar Acción</h3><p id="confirmation-message" class="modal-body">¿Estás seguro?</p><div class="modal-actions"><button id="cancel-btn" class="modal-btn">Cancelar</button><button id="confirm-btn" class="modal-btn">Eliminar</button></div> </div> </div>
+    <div id="link-modal-overlay" class="modal-overlay"> <div class="modal-container"> <h3>Insertar Enlace</h3> <form id="link-form"> <div class="form-group"><label for="link-url">URL del Enlace</label><input type="url" id="link-url" placeholder="https://ejemplo.com" required></div><button type="submit">Insertar</button> </form> </div> </div>
+    
+    <footer class="main-footer">
+        <p>&copy; <span id="copyright-year">2025</span> Roboxmaker. Todos los derechos reservados.</p>
+        <p class="confidential-message">
+            Esta herramienta es para uso exclusivo de los miembros del equipo de Roboxmaker. La información contenida es de carácter confidencial.
+        </p>
+         <!-- El botón de logout ahora está en la tarjeta de perfil -->
+    </footer>
+
+    <script>
+        // Configuración de Firebase (sin cambios)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdzAnW_PjYGFTTbAiZEnrco7odFRg27nU",
+            authDomain: "roboxmaker-board.firebaseapp.com",
+            projectId: "roboxmaker-board",
+            storageBucket: "roboxmaker-board.appspot.com",
+            messagingSenderId: "446553437793",
+            appId: "1:446553437793:web:6a48927215e4794bc3dc20"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth(); 
+        const projectsCollection = db.collection('projects');
+        const tasksCollection = db.collection('tasks');
+        const usersCollection = db.collection('users');
+        const notificationsCollection = db.collection('notifications'); // Nueva colección
+    </script>
+
+    <script>
+        // --- LÓGICA PRINCIPAL ---
+        
+        const loginView = document.getElementById('login-view');
+        const appView = document.getElementById('app-view'); 
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const profileBtn = document.getElementById('profile-btn');
+        const profileCard = document.getElementById('profile-card');
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationBadge = document.getElementById('notification-badge');
+        const notificationPanel = document.getElementById('notification-panel');
+        const notificationList = document.getElementById('notification-list');
+        
+        let currentView = 'login'; 
+        let currentUserRole = null; 
+        let currentUserName = null; 
+        let currentUserId = null; // Guardar el ID del usuario actual
+        let isAppInitialized = false; 
+        let allUsers = []; // Array para almacenar la lista de usuarios
+        let unsubscribeNotifications = null;
+
+        // --- LÓGICA DE AUTENTICACIÓN ---
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUserId = user.uid; // Guardar ID del usuario logueado
+                try {
+                    const userDoc = await usersCollection.doc(user.uid).get();
+                    currentUserRole = userDoc.exists ? userDoc.data().role : 'Colaborador';
+                    currentUserName = userDoc.exists ? userDoc.data().name : 'Usuario'; 
+                    
+                    if (currentUserRole && currentUserRole.toLowerCase() === 'administrador') {
+                        document.body.classList.add('admin-view');
+                    } else {
+                        document.body.classList.remove('admin-view');
+                    }
+                    
+                } catch (error) {
+                     console.error("Error al obtener el rol:", error);
+                     currentUserRole = 'Colaborador'; 
+                     currentUserName = 'Usuario';
+                     document.body.classList.remove('admin-view');
+                }
+                
+                loginView.style.display = 'none';
+                appView.style.display = 'block';
+                profileBtn.style.display = 'flex'; 
+                notificationBtn.style.display = 'flex'; // Mostrar campana
+                
+                if (!isAppInitialized) {
+                     await loadAllUsers(); // Cargar usuarios antes de inicializar la UI
+                     requestAnimationFrame(() => {
+                        initializeAppUI(); 
+                        isAppInitialized = true;
+                         if (typeof showProjectsView === 'function') { 
+                            showProjectsView(); 
+                         } else {
+                             console.error("showProjectsView no está definida al momento de llamarla");
+                         }
+                    });
+                } else {
+                     if (typeof showProjectsView === 'function') { 
+                        showProjectsView(); 
+                    }
+                }
+                listenForNotifications(currentUserId); // Iniciar escucha de notificaciones
+                 
+            } else {
+                loginView.style.display = 'block';
+                appView.style.display = 'none'; 
+                profileBtn.style.display = 'none'; 
+                notificationBtn.style.display = 'none';
+                if(profileCard) profileCard.style.display = 'none'; 
+                if(notificationPanel) notificationPanel.style.display = 'none';
+                currentView = 'login';
+                currentUserRole = null;
+                currentUserName = null;
+                currentUserId = null;
+                isAppInitialized = false; 
+                document.body.classList.remove('admin-view'); 
+                
+                const projectList = document.getElementById('project-list');
+                const columns = { todo: document.getElementById('todo'), doing: document.getElementById('doing'), done: document.getElementById('done') };
+                if (projectList) projectList.innerHTML = ''; 
+                if (columns.todo) Object.values(columns).forEach(col => { if(col) col.innerHTML = ''; }); 
+                
+                if (unsubscribeNotifications) { // Detener escucha de notificaciones
+                    unsubscribeNotifications();
+                    unsubscribeNotifications = null;
+                }
+            }
+        });
+
+       if(loginForm) { 
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                const email = emailInput ? emailInput.value : '';
+                const password = passwordInput ? passwordInput.value : '';
+                
+                if(loginError) loginError.style.display = 'none'; 
+
+                if (email && password) {
+                    auth.signInWithEmailAndPassword(email, password)
+                        .catch((error) => {
+                            console.error("Error de login:", error);
+                            if(loginError) { 
+                                loginError.textContent = getFirebaseErrorMessage(error);
+                                loginError.style.display = 'block';
+                            }
+                        });
+                } else {
+                     if(loginError) { 
+                        loginError.textContent = "Por favor ingresa correo y contraseña.";
+                        loginError.style.display = 'block';
+                     }
+                }
+            });
+        }
+        
+       if(logoutBtn) { 
+            logoutBtn.addEventListener('click', () => { 
+                auth.signOut(); 
+                if (profileCard) profileCard.style.display = 'none'; 
+            });
+       }
+
+        function getFirebaseErrorMessage(error) { /* (Sin cambios) */ }
+        function formatDateForDisplay(dateStr) { /* (Sin cambios) */ }
+        function convertToYYYYMMDD(dateStr) { /* (Sin cambios) */ }
+        function formatDateForStorage(dateObj) { /* (Sin cambios) */ }
+        
+        // Copiar las 4 funciones de ayuda (getFirebaseErrorMessage, formatDateForDisplay, convertToYYYYMMDD, formatDateForStorage)
+        function getFirebaseErrorMessage(error) { switch (error.code) { case 'auth/invalid-email': return 'El formato del correo electrónico no es válido.'; case 'auth/user-disabled': return 'Este usuario ha sido deshabilitado.'; case 'auth/user-not-found': return 'No se encontró ningún usuario con este correo electrónico.'; case 'auth/wrong-password': return 'La contraseña es incorrecta.'; case 'auth/invalid-credential': return 'Credenciales inválidas. Verifica tu correo y contraseña.'; default: return 'Ocurrió un error inesperado. Inténtalo de nuevo.'; } }
+        function formatDateForDisplay(dateStr) { if (!dateStr) return ''; if (dateStr.includes('-')) { const [year, month, day] = dateStr.split('-'); return `${day}/${month}/${year.slice(-2)}`; } if (dateStr.includes('/')) { return dateStr; } return dateStr; }
+        function convertToYYYYMMDD(dateStr) { if (!dateStr || dateStr.includes('-')) return dateStr; if (dateStr.includes('/')) { const parts = dateStr.split('/'); if (parts.length === 3) { let [day, month, year] = parts; if (year.length === 2) { year = `20${year}`; } return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`; } } return dateStr; }
+        function formatDateForStorage(dateObj) { const year = dateObj.getFullYear(); const month = String(dateObj.getMonth() + 1).padStart(2, '0'); const day = String(dateObj.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
+
+        // --- Nueva Función para cargar usuarios ---
+        async function loadAllUsers() {
+            try {
+                const snapshot = await usersCollection.orderBy('name').get();
+                allUsers = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    name: doc.data().name,
+                    role: doc.data().role
+                }));
+                console.log("Usuarios cargados:", allUsers);
+            } catch (error) {
+                console.error("Error cargando la lista de usuarios:", error);
+                allUsers = []; // Asegurar que esté vacío en caso de error
+            }
+        }
+
+        // --- Nueva Función para poblar el dropdown de usuarios ---
+        function populateUserDropdown(elementId, selectedId = null) {
+            const selectElement = document.getElementById(elementId);
+            if (!selectElement) return;
+            
+            selectElement.innerHTML = '<option value="">-- Asignar responsable --</option>'; // Opción por defecto
+            
+            allUsers.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.name} (${user.role})`;
+                if (user.id === selectedId) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // --- Nueva Función para crear notificaciones ---
+        async function createNotification(taskId, taskTitle, projectId, projectName, assignedUserId, assignedUserName) {
+            if (!assignedUserId || assignedUserId === currentUserId) {
+                console.log("No se crea notificación (auto-asignada o sin responsable)");
+                return; // No notificar si te la asignas a ti mismo o no hay nadie asignado
+            }
+
+            try {
+                await notificationsCollection.add({
+                    assignedTo: assignedUserId, // ID del usuario que recibirá la notificación
+                    createdBy: currentUserId, // ID del usuario que la creó
+                    createdByName: currentUserName, // Nombre del que la creó
+                    taskTitle: taskTitle,
+                    taskId: taskId,
+                    projectId: projectId,
+                    projectName: projectName,
+                    read: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log(`Notificación creada para ${assignedUserName}`);
+            } catch (error) {
+                console.error("Error al crear la notificación:", error);
+            }
+        }
+        
+        // --- Nueva Función para escuchar notificaciones ---
+        function listenForNotifications(userId) {
+            if (unsubscribeNotifications) unsubscribeNotifications(); // Cancela la escucha anterior
+            
+            // CAMBIO: Consulta optimizada para buscar solo no leídas.
+            unsubscribeNotifications = notificationsCollection
+                .where('assignedTo', '==', userId)
+                .where('read', '==', false) // <-- NUEVO FILTRO
+                .orderBy('createdAt', 'desc') // <-- Mantenemos 'desc' para la lógica de la app
+                .onSnapshot(snapshot => {
+                    if (!notificationList || !notificationBadge) return;
+
+                    let unreadCount = snapshot.size; // El tamaño del snapshot AHORA es el conteo de no leídas
+                    
+                    // Actualizar insignia
+                    if (unreadCount > 0) {
+                        notificationBadge.textContent = unreadCount;
+                        notificationBadge.style.display = 'flex';
+                    } else {
+                        notificationBadge.style.display = 'none';
+                    }
+                    
+                    // Poblar la lista (podríamos cargar las leídas también si quisiéramos, pero esto es más simple)
+                    notificationList.innerHTML = '';
+                    if (snapshot.empty) {
+                        notificationList.innerHTML = '<li class="no-notifications">No tienes notificaciones nuevas.</li>';
+                    }
+
+                    snapshot.forEach(doc => {
+                        const notif = doc.data();
+                        
+                        const li = document.createElement('li');
+                        li.className = 'notification-item is-unread'; // Todas las que llegan están no leídas
+                        li.dataset.id = doc.id; // ID de la notificación
+                        li.dataset.taskId = notif.taskId;
+                        li.dataset.projectId = notif.projectId;
+                        li.dataset.projectName = notif.projectName; // Guardar nombre del proyecto
+                        
+                        let dateStr = "Hace un momento";
+                        if (notif.createdAt) {
+                            const diff = (new Date() - notif.createdAt.toDate()) / 1000; // segundos
+                            if (diff < 60) dateStr = "Hace un momento";
+                            else if (diff < 3600) dateStr = `Hace ${Math.floor(diff / 60)} min`;
+                            else if (diff < 86400) dateStr = `Hace ${Math.floor(diff / 3600)}h`;
+                            else dateStr = `Hace ${Math.floor(diff / 86400)}d`;
+                        }
+
+                        li.innerHTML = `
+                            <p><strong>${notif.createdByName}</strong> te asignó la tarea: <strong>${notif.taskTitle}</strong></p>
+                            <span class="timestamp">${dateStr} en ${notif.projectName}</span>
+                        `;
+                        notificationList.appendChild(li);
+                    });
+
+                }, error => {
+                    console.error("Error escuchando notificaciones:", error);
+                    // Aquí es donde aparecerá el error de índice.
+                });
+        }
+
+
+        // --- FUNCIÓN PARA INICIALIZAR LA UI PRINCIPAL ---
+        function initializeAppUI() {
+            console.log("Inicializando UI principal..."); 
+            // Elementos de la App
+            const projectsView = document.getElementById('projects-view');
+            const kanbanView = document.getElementById('kanban-view');
+            const actionBtn = document.getElementById('action-btn');
+            const projectList = document.getElementById('project-list');
+            const addProjectModal = document.getElementById('add-project-modal-overlay');
+            const addProjectForm = document.getElementById('add-project-form');
+            const editProjectModal = document.getElementById('edit-project-modal-overlay');
+            const editProjectForm = document.getElementById('edit-project-form');
+            const board = document.getElementById('kanban-board');
+            const kanbanProjectTitle = document.getElementById('kanban-project-title');
+            const backToProjectsBtn = document.getElementById('back-to-projects-btn');
+            const addTaskModal = document.getElementById('add-task-modal-overlay');
+            const addTaskForm = document.getElementById('add-task-form');
+            const editTaskModal = document.getElementById('edit-task-modal-overlay');
+            const editTaskForm = document.getElementById('edit-task-form');
+            const confirmationModal = document.getElementById('confirmation-modal-overlay');
+            const confirmationMessage = document.getElementById('confirmation-message');
+            const confirmBtn = document.getElementById('confirm-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const linkModal = document.getElementById('link-modal-overlay');
+            const linkForm = document.getElementById('link-form');
+            const profileName = document.getElementById('profile-name');
+            const profileRole = document.getElementById('profile-role');
+            
+            // Variables específicas de la App
+            let currentProjectId = null;
+            let currentProjectName = null; // Guardar nombre del proyecto actual
+            let unsubscribeTasks = null;
+            let onConfirmAction = () => {};
+            let savedSelection = null;
+
+            const columns = { todo: document.getElementById('todo'), doing: document.getElementById('doing'), done: document.getElementById('done') };
+
+            // --- LÓGICA DE PERFIL Y NOTIFICACIONES ---
+            if(profileName) profileName.textContent = currentUserName;
+            if(profileRole) profileRole.textContent = currentUserRole;
+            
+            if(profileBtn) {
+                profileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if(notificationPanel) notificationPanel.style.display = 'none'; // Ocultar otro panel
+                    if(profileCard) profileCard.style.display = profileCard.style.display === 'block' ? 'none' : 'block';
+                });
+            }
+            
+            if(notificationBtn) {
+                 notificationBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if(profileCard) profileCard.style.display = 'none'; // Ocultar otro panel
+                    if(notificationPanel) notificationPanel.style.display = notificationPanel.style.display === 'block' ? 'none' : 'block';
+                });
+            }
+            
+            if(notificationList) {
+                notificationList.addEventListener('click', (e) => {
+                    const item = e.target.closest('.notification-item');
+                    if (!item) return;
+
+                    const notifId = item.dataset.id;
+                    const projId = item.dataset.projectId;
+                    const projName = item.dataset.projectName;
+                    
+                    // Marcar como leída
+                    if (item.classList.contains('is-unread')) {
+                        notificationsCollection.doc(notifId).update({ read: true })
+                            .catch(err => console.error("Error al marcar notif como leída:", err));
+                    }
+                    
+                    // Navegar al proyecto
+                    if (projId && projName && typeof showKanbanView === 'function') {
+                        showKanbanView(projId, projName);
+                    }
+                    
+                    if(notificationPanel) notificationPanel.style.display = 'none';
+                });
+            }
+
+            // Click outside para cerrar paneles
+            document.addEventListener('click', (e) => {
+                if (profileCard && profileBtn && !profileCard.contains(e.target) && !profileBtn.contains(e.target) && profileCard.style.display === 'block') {
+                    profileCard.style.display = 'none';
+                }
+                if (notificationPanel && notificationBtn && !notificationPanel.contains(e.target) && !notificationBtn.contains(e.target) && notificationPanel.style.display === 'block') {
+                    notificationPanel.style.display = 'none';
+                }
+            });
+
+
+            // --- LÓGICA DE PROYECTOS ---
+            function showConfirmationModal(message, onConfirm) {
+                if(confirmationMessage) confirmationMessage.textContent = message;
+                onConfirmAction = onConfirm;
+                if(confirmationModal) confirmationModal.style.display = 'flex';
+            }
+            if(confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (typeof onConfirmAction === 'function') { 
+                        onConfirmAction();
+                    }
+                    if(confirmationModal) confirmationModal.style.display = 'none';
+                });
+            }
+            if(cancelBtn) {
+                cancelBtn.addEventListener('click', () => { 
+                    if(confirmationModal) confirmationModal.style.display = 'none'; 
+                });
+            }
+
+
+             window.showProjectsView = function() { 
+                if(kanbanView) kanbanView.style.display = 'none';
+                if(projectsView) projectsView.style.display = 'block';
+                if(actionBtn) actionBtn.title = 'Agregar Proyecto';
+                currentView = 'projects'; 
+                currentProjectId = null;
+                currentProjectName = null;
+                if(unsubscribeTasks) {
+                    unsubscribeTasks();
+                    unsubscribeTasks = null;
+                }
+            }; 
+
+            window.showKanbanView = function(projectId, projectName) { 
+                if(projectsView) projectsView.style.display = 'none';
+                if(kanbanView) kanbanView.style.display = 'block';
+                if(actionBtn) actionBtn.title = 'Agregar Tarea';
+                currentView = 'kanban'; 
+                currentProjectId = projectId;
+                currentProjectName = projectName; // Guardar nombre
+                if(kanbanProjectTitle) kanbanProjectTitle.textContent = projectName;
+                loadTasksForProject(projectId);
+            }; 
+
+
+            projectsCollection.orderBy("name").onSnapshot(snapshot => {
+                if (!projectList) return; 
+                projectList.innerHTML = '';
+                if (snapshot.empty) { projectList.innerHTML = '<p>No hay proyectos. ¡Crea el primero!</p>'; return; }
+                snapshot.forEach(doc => {
+                    const project = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'project-card';
+                    card.dataset.id = doc.id;
+                    card.dataset.name = project.name;
+                    // Iconos de Proyecto actualizados
+                    card.innerHTML = `<div class="project-card-actions admin-only"><button class="project-action-btn edit" title="Editar proyecto"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M5 19h1.4l8.62-8.62-1.4-1.4L5 17.6V19zM19.71 8.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83zM3 19V5h11.17l2 2H5v12h12v-5.17l2-2V19c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2z"/></svg></button><button class="project-action-btn delete" title="Eliminar proyecto"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4h-3.5z"/></svg></button></div><h3>${project.name}</h3>`;
+                    projectList.appendChild(card);
+                });
+            }, error => console.error("Error listening to projects:", error)); 
+
+            if(projectList) { 
+                projectList.addEventListener('click', (e) => {
+                    const actionButton = e.target.closest('.project-action-btn');
+                    const card = e.target.closest('.project-card');
+                    if (actionButton && card) { 
+                        if (currentUserRole.toLowerCase() !== 'administrador') return; 
+                        const projectId = card.dataset.id;
+                        if (actionButton.classList.contains('edit')) {
+                            const editProjectNameInput = document.getElementById('edit-project-name');
+                            if(editProjectNameInput) editProjectNameInput.value = card.dataset.name;
+                            if(editProjectForm) editProjectForm.dataset.id = projectId;
+                            if(editProjectModal) editProjectModal.style.display = 'flex';
+                        } else if (actionButton.classList.contains('delete')) {
+                            showConfirmationModal(`¿Seguro que quieres eliminar el proyecto "${card.dataset.name}"? ¡Todas sus tareas serán eliminadas de forma permanente!`, () => deleteProject(projectId));
+                        }
+                    } else if (card) { 
+                        if (typeof showKanbanView === 'function') {
+                            showKanbanView(card.dataset.id, card.dataset.name); 
+                        }
+                    }
+                });
+            }
+            
+            async function deleteProject(projectId) {
+                if (currentUserRole.toLowerCase() !== 'administrador') return; 
+                try {
+                    const tasksToDelete = await tasksCollection.where('projectId', '==', projectId).get();
+                    const batch = db.batch();
+                    tasksToDelete.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    await projectsCollection.doc(projectId).delete();
+                    console.log(`Proyecto ${projectId} y sus tareas eliminados.`);
+                } catch (error) {
+                    console.error("Error eliminando proyecto y tareas:", error);
+                }
+            }
+
+
+            if(addProjectForm) {
+                addProjectForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (currentUserRole.toLowerCase() !== 'administrador') return; 
+                    const projectNameInput = document.getElementById('project-name');
+                    const projectName = projectNameInput ? projectNameInput.value.trim() : '';
+                    if(projectName) {
+                        projectsCollection.add({ name: projectName, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+                        .then(() => {
+                            addProjectForm.reset(); 
+                            if(addProjectModal) addProjectModal.style.display = 'none';
+                        })
+                        .catch(error => console.error("Error adding project: ", error));
+                    }
+                });
+            }
+
+            if(editProjectForm) {
+                editProjectForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (currentUserRole.toLowerCase() !== 'administrador') return; 
+                    const projectId = editProjectForm.dataset.id;
+                    const newNameInput = document.getElementById('edit-project-name');
+                    const newName = newNameInput ? newNameInput.value.trim() : '';
+                    
+                    if(newName && projectId) {
+                        projectsCollection.doc(projectId).update({ name: newName })
+                        .then(() => {
+                             editProjectForm.reset(); 
+                             if(editProjectModal) editProjectModal.style.display = 'none';
+                        })
+                        .catch(error => console.error("Error updating project: ", error));
+                    }
+                });
+            }
+
+             // --- LÓGICA DE TAREAS ---
+            function loadTasksForProject(projectId) {
+                if (unsubscribeTasks) unsubscribeTasks(); 
+                 if (!projectId) {
+                    console.warn("loadTasksForProject llamado sin projectId");
+                    return;
+                }
+                unsubscribeTasks = tasksCollection.where('projectId', '==', projectId).orderBy("timestamp", "desc").onSnapshot(snapshot => {
+                    Object.values(columns).forEach(col => { if (col) col.innerHTML = ''; }); 
+                    snapshot.forEach(doc => {
+                        const task = doc.data();
+                        const taskElement = createTaskElement(doc.id, task);
+                        if (columns[task.status]) {
+                            columns[task.status].appendChild(taskElement);
+                        } else {
+                            console.warn(`Estado desconocido "${task.status}" para la tarea ${doc.id}`);
+                        }
+                    });
+                }, error => {
+                     console.error(`Error en listener de tareas para ${projectId}: `, error); 
+                });
+            }
+            
+            function createTaskElement(id, task) {
+                 const taskElement = document.createElement('div');
+                taskElement.className = 'task';
+                taskElement.classList.add(`status-${task.status}`);
+                taskElement.draggable = true;
+                taskElement.dataset.id = id;
+                if(task.completed) taskElement.classList.add('is-completed');
+                
+                let responsibleHTML = task.responsibleName ? `<span class="task-responsible">${task.responsibleName}</span>` : '<span></span>';
+                let datesHTML = `<div class="task-dates"><span>Creado: ${formatDateForDisplay(task.createdAt)}</span>`;
+                if (task.completedAt) datesHTML += `<span>Finalizado: ${formatDateForDisplay(task.completedAt)}</span>`;
+                datesHTML += `</div>`;
+                
+                const completeButtonDisplay = task.completed ? 'style="display: none;"' : '';
+                // CAMBIO: Icono "cancel"
+                const unCompleteButton = task.completed ? `<button class="task-action-btn un-complete admin-only" title="Desmarcar como finalizada"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg></button>` : '';
+
+                const cleanDescription = task.description ? task.description.replace(/<script.*?>.*?<\/script>/gi, '') : '';
+
+                taskElement.innerHTML = `
+                    <div class="task-header">
+                        <h4>${task.title}</h4>
+                        <div class="task-actions">
+                            ${unCompleteButton}
+                            <!-- CAMBIO: Icono "check_circle" -->
+                            <button class="task-action-btn complete" title="Marcar como finalizada" ${completeButtonDisplay}><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button>
+                            <!-- CAMBIO: Icono "Delete" -->
+                            <button class="task-action-btn delete admin-only" title="Eliminar tarea"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4h-3.5z"/></svg></button>
+                        </div>
+                    </div>
+                    <div class="task-description">${cleanDescription}</div>
+                    <div class="task-footer">
+                        ${responsibleHTML}
+                        ${datesHTML}
+                    </div>`;
+                
+                const descriptionDiv = taskElement.querySelector('.task-description');
+                 requestAnimationFrame(() => {
+                    if (descriptionDiv && descriptionDiv.scrollHeight > 60) { 
+                        descriptionDiv.classList.add('collapsible');
+                        const toggleBtn = document.createElement('button');
+                        toggleBtn.textContent = 'Ver más';
+                        toggleBtn.className = 'toggle-description-btn';
+                        descriptionDiv.after(toggleBtn); 
+                        
+                        toggleBtn.addEventListener('click', () => {
+                            taskElement.classList.toggle('is-expanded');
+                            toggleBtn.textContent = taskElement.classList.contains('is-expanded') ? 'Ver menos' : 'Ver más';
+                        });
+                    }
+                 });
+
+                return taskElement;
+            }
+             
+            Object.values(columns).forEach(container => { 
+                if (container) {
+                    new Sortable(container, { group: 'kanban', animation: 150, ghostClass: 'ghost',
+                        onEnd: (evt) => {
+                            const taskId = evt.item.dataset.id;
+                            const newStatus = evt.to.id;
+                            if (taskId && newStatus) {
+                                tasksCollection.doc(taskId).update({ status: newStatus })
+                                 .catch(error => console.error("Error updating task status:", error));
+                            }
+                        }
+                    }); 
+                }
+            });
+
+            if (board) { 
+                board.addEventListener('dblclick', async (e) => {
+                    const taskElement = e.target.closest('.task');
+                    if(taskElement) {
+                        const taskId = taskElement.dataset.id;
+                        try {
+                            const doc = await tasksCollection.doc(taskId).get();
+                            if(doc.exists) {
+                                const taskData = doc.data();
+                                
+                                populateUserDropdown('edit-task-responsible', taskData.responsibleId); // Poblar dropdown
+                                
+                                const editTitleInput = document.getElementById('edit-task-title');
+                                const editDescriptionEditor = document.getElementById('edit-task-description');
+                                const editResponsibleInput = document.getElementById('edit-task-responsible');
+                                const createdAtInput = document.getElementById('edit-task-createdAt');
+                                const createdAtGroup = createdAtInput ? createdAtInput.closest('.form-group') : null;
+
+                                if(editTitleInput) editTitleInput.value = taskData.title;
+                                if(editDescriptionEditor) editDescriptionEditor.innerHTML = taskData.description || '';
+                                // 'edit-task-responsible' es poblado por populateUserDropdown
+                                
+                                if (currentUserRole.toLowerCase() === 'administrador' && createdAtInput && createdAtGroup) {
+                                    createdAtInput.value = convertToYYYYMMDD(taskData.createdAt); 
+                                    createdAtGroup.style.display = 'block';
+                                } else if (createdAtGroup) {
+                                    createdAtGroup.style.display = 'none';
+                                }
+                                
+                                if(editTaskForm) editTaskForm.dataset.id = taskId;
+                                if(editTaskModal) editTaskModal.style.display = 'flex';
+                            }
+                        } catch (error) {
+                            console.error("Error fetching task for edit:", error);
+                        }
+                    }
+                });
+
+                board.addEventListener('click', (e) => {
+                    const actionButton = e.target.closest('.task-action-btn');
+                    if (!actionButton) return;
+                    const taskId = actionButton.closest('.task').dataset.id;
+                    
+                    if (actionButton.classList.contains('delete')) {
+                        if (currentUserRole.toLowerCase() !== 'administrador') return; 
+                        showConfirmationModal('¿Seguro que quieres eliminar esta tarea?', () => tasksCollection.doc(taskId).delete());
+                    }
+                    if (actionButton.classList.contains('un-complete')) {
+                        if (currentUserRole.toLowerCase() !== 'administrador') return; 
+                        tasksCollection.doc(taskId).update({ 
+                            completed: false, 
+                            completedAt: firebase.firestore.FieldValue.delete(), 
+                            status: 'todo' 
+                        }).catch(error => console.error("Error un-completing task:", error));
+                    }
+                    if (actionButton.classList.contains('complete')) {
+                        tasksCollection.doc(taskId).update({ 
+                            completed: true, 
+                            completedAt: formatDateForStorage(new Date()) 
+                        }).catch(error => console.error("Error completing task:", error));
+                    }
+                });
+            }
+
+            if (editTaskForm) { 
+                editTaskForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const taskId = editTaskForm.dataset.id;
+                    const titleInput = document.getElementById('edit-task-title');
+                    const descriptionEditor = document.getElementById('edit-task-description');
+                    const responsibleSelect = document.getElementById('edit-task-responsible');
+                    const createdAtInput = document.getElementById('edit-task-createdAt');
+
+                    const responsibleId = responsibleSelect ? responsibleSelect.value : '';
+                    const responsibleName = (responsibleSelect && responsibleSelect.selectedIndex > 0) ? responsibleSelect.options[responsibleSelect.selectedIndex].text.split(' (')[0] : '';
+                    
+                    const updatedData = {
+                        title: titleInput ? titleInput.value.trim() : '',
+                        description: descriptionEditor ? descriptionEditor.innerHTML : '',
+                        responsibleId: responsibleId,
+                        responsibleName: responsibleName
+                    };
+                    
+                    if (currentUserRole.toLowerCase() === 'administrador' && createdAtInput && createdAtInput.value) {
+                        updatedData.createdAt = createdAtInput.value;
+                    }
+                    
+                    if (taskId) {
+                        tasksCollection.doc(taskId).get().then(oldDoc => { // Obtener datos antiguos
+                            const oldData = oldDoc.data();
+                            tasksCollection.doc(taskId).update(updatedData)
+                                .then(() => {
+                                    editTaskModal.style.display = 'none';
+                                    // Crear notificación si el responsable cambió y no es el mismo usuario
+                                    if (responsibleId && oldData.responsibleId !== responsibleId) {
+                                        createNotification(taskId, updatedData.title, currentProjectId, currentProjectName, responsibleId, responsibleName);
+                                    }
+                                })
+                                .catch(error => console.error("Error updating task:", error));
+                        });
+                    }
+                });
+            }
+            
+            if (addTaskForm) { 
+                addTaskForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const titleInput = document.getElementById('task-title');
+                    const descriptionEditor = document.getElementById('task-description');
+                    const responsibleSelect = document.getElementById('task-responsible');
+
+                    const title = titleInput ? titleInput.value.trim() : '';
+                    const description = descriptionEditor ? descriptionEditor.innerHTML : '';
+                    const responsibleId = responsibleSelect ? responsibleSelect.value : '';
+                    const responsibleName = (responsibleSelect && responsibleSelect.selectedIndex > 0) ? responsibleSelect.options[responsibleSelect.selectedIndex].text.split(' (')[0] : '';
+
+                    
+                    if (title === '' || !currentProjectId) return;
+
+                    const newTask = {
+                        title, description, responsibleId, responsibleName, 
+                        status: 'todo', projectId: currentProjectId,
+                        createdAt: formatDateForStorage(new Date()),
+                        completed: false,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    tasksCollection.add(newTask).then((docRef) => {
+                        addTaskForm.reset();
+                        if(descriptionEditor) descriptionEditor.innerHTML = ''; 
+                        addTaskModal.style.display = 'none';
+                        // Crear notificación
+                        if (responsibleId) {
+                            createNotification(docRef.id, title, currentProjectId, currentProjectName, responsibleId, responsibleName);
+                        }
+                    }).catch(error => console.error("Error adding task:", error));
+                });
+            }
+            
+            function initializeToolbar(toolbarId) {
+                const toolbar = document.getElementById(toolbarId);
+                if (toolbar) {
+                    toolbar.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const button = e.target.closest('button');
+                        if(button) {
+                            const command = button.dataset.command;
+                            if (command === 'createLink') {
+                                const selection = window.getSelection();
+                                if (selection && selection.rangeCount > 0) {
+                                    savedSelection = selection.getRangeAt(0).cloneRange();
+                                    linkModal.style.display = 'flex';
+                                    const linkUrlInput = document.getElementById('link-url');
+                                    if(linkUrlInput) linkUrlInput.focus();
+                                }
+                            } else if (command){ 
+                                document.execCommand(command, false, null);
+                                const editor = toolbar.nextElementSibling; 
+                                if (editor && editor.hasAttribute('contenteditable')) {
+                                     editor.focus();
+                                }
+                            }
+                        }
+                    });
+                } else { console.error(`Toolbar con ID "${toolbarId}" no encontrado.`); }
+            }
+            initializeToolbar('add-task-toolbar');
+            initializeToolbar('edit-task-toolbar');
+            
+            if (linkForm) { 
+                linkForm.addEventListener('submit', (e) => {
+                     e.preventDefault();
+                    const urlInput = document.getElementById('link-url');
+                    const url = urlInput ? urlInput.value : '';
+                    
+                    if (url && savedSelection) {
+                        const selection = window.getSelection();
+                        if (selection) { 
+                            selection.removeAllRanges();
+                            selection.addRange(savedSelection);
+                        }
+                        let validUrl = url;
+                        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                             validUrl = 'https://' + url;
+                        }
+                        try {
+                            new URL(validUrl); 
+                             document.execCommand('createLink', false, validUrl);
+                        } catch (_) {
+                            alert("URL no válida. Asegúrate de incluir http:// o https://");
+                             if(urlInput) urlInput.focus(); 
+                            return; 
+                        }
+                    }
+                    linkForm.reset();
+                    linkModal.style.display = 'none';
+                    savedSelection = null;
+                    const activeEditor = document.activeElement?.closest('.modal-overlay')?.querySelector('.rich-text-editor');
+                    if (activeEditor) {
+                        activeEditor.focus();
+                    }
+                });
+            }
+
+             // --- MANEJO DE EVENTOS GLOBALES ---
+             if (actionBtn) { 
+                actionBtn.addEventListener('click', () => {
+                    if (currentView === 'projects') { 
+                        if (currentUserRole.toLowerCase() !== 'administrador') {
+                            alert("No tienes permiso para crear proyectos."); 
+                            return; 
+                        }
+                        addProjectModal.style.display = 'flex';
+                         const projectNameInput = document.getElementById('project-name');
+                         if(projectNameInput) projectNameInput.focus();
+                    } else { 
+                        populateUserDropdown('task-responsible'); // Poblar dropdown al abrir
+                        addTaskModal.style.display = 'flex';
+                         const taskTitleInput = document.getElementById('task-title');
+                         if(taskTitleInput) taskTitleInput.focus();
+                    }
+                });
+             }
+             if (backToProjectsBtn) { 
+                backToProjectsBtn.addEventListener('click', showProjectsView);
+             }
+            document.querySelectorAll('.modal-overlay').forEach(modal => { modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; }); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay').forEach(modal => { modal.style.display = 'none'; });
+                }
+            });
+             
+            // Actualizar año del copyright
+            const yearSpan = document.getElementById('copyright-year');
+            if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+
+        } // Fin de initializeAppUI
+            
+    </script>
+
+</body>
+</html>

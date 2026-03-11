@@ -1,34 +1,55 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roboxmaker - Panel de Informática</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="lessonsData.js"></script>
     <style>
         :root {
             --brand-primary: #636EF7;
             --brand-secondary: #1E293B;
             --brand-light: #F1F5F9;
         }
-        body { font-family: 'Roboto', sans-serif; background-color: #F8FAFC; }
-        h1, h2, h3 { font-family: 'Poppins', sans-serif; }
-        
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #F8FAFC;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Poppins', sans-serif;
+        }
+
         .lesson-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
+
         .lesson-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(99, 110, 247, 0.1), 0 10px 10px -5px rgba(99, 110, 247, 0.04);
             border-color: var(--brand-primary);
         }
+
+        .lesson-card.hiding {
+            opacity: 0 !important;
+            transform: scale(0.95) !important;
+            pointer-events: none;
+        }
+
         .brand-gradient {
             background: linear-gradient(135deg, #636EF7 0%, #a78bfa 100%);
         }
     </style>
 </head>
+
 <body class="antialiased">
 
     <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
@@ -36,7 +57,9 @@
             <h1 class="text-2xl font-bold text-[#636EF7]">ROBOX<span class="font-light text-slate-500">MAKER</span></h1>
             <div class="flex items-center gap-4">
                 <span class="text-sm font-medium text-slate-600">Explorador Digital (1°-3° Grado)</span>
-                <div class="w-10 h-10 rounded-full brand-gradient flex items-center justify-center text-white font-bold">ED</div>
+                <div
+                    class="w-10 h-10 rounded-full brand-gradient flex items-center justify-center text-white font-bold">
+                    ED</div>
             </div>
         </div>
     </nav>
@@ -47,28 +70,307 @@
             <p class="text-slate-500">Ruta de Aprendizaje K-12: Construyendo el futuro pieza a pieza.</p>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            <div class="lesson-card bg-white rounded-2xl overflow-hidden cursor-pointer" onclick="window.location.href='2026.html'">
-                <div class="h-40 brand-gradient p-6 flex items-end relative">
-                    <svg class="w-16 h-16 text-white opacity-20 absolute top-4 right-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    <span class="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full">UNIDAD 5</span>
+        <!-- Barra de Búsqueda -->
+        <div class="mb-8 relative w-full md:max-w-2xl" id="searchContainer" style="display: none;">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input type="text" id="lessonSearch"
+                class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#636EF7] focus:border-transparent transition-all duration-300 shadow-sm text-slate-700 font-['Roboto'] placeholder:font-['Roboto'] placeholder:text-slate-400"
+                placeholder="Buscar por título, descripción o código de lección...">
+        </div>
+
+        <div class="mb-6" id="backButtonContainer" style="display: none;">
+            <button id="btnBackToGrades"
+                class="flex items-center text-slate-600 hover:text-[#636EF7] transition-colors font-medium">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Volver a Grados
+            </button>
+        </div>
+
+        <!-- Vista de Grados -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="gradeGrid">
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('K4')">
+                <div
+                    class="w-16 h-16 rounded-full brand-gradient text-white flex items-center justify-center mb-4 shadow-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
                 </div>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2">Todos los vehículos son importantes</h3>
-                    <p class="text-slate-600 text-sm mb-4 line-clamp-2">Explora la importancia de las vías de comunicación terrestre y diseña tu propio camión de carga.</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[var(--brand-primary)] font-semibold text-sm">Lección P3-L14</span>
-                        <div class="flex items-center text-slate-400 text-xs">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            45 min
-                        </div>
-                    </div>
-                </div>
+                <h3 class="text-xl font-bold text-slate-800">Kínder 4</h3>
             </div>
 
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('K5')">
+                <div
+                    class="w-16 h-16 rounded-full brand-gradient text-white flex items-center justify-center mb-4 shadow-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Kínder 5</h3>
             </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('PP')">
+                <div
+                    class="w-16 h-16 rounded-full brand-gradient text-white flex items-center justify-center mb-4 shadow-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Pre-Primaria</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria1')">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">1°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 1</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria2')">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">2°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 2</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria3')">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">3°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 3</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria4')">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">4°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 4</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria5')">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">5°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 5</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Primaria6')">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">6°</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Primaria 6</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Secundaria1')">
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">I</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Secundaria 1</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Secundaria2')">
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">II</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Secundaria 2</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('Secundaria3')">
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">III</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Secundaria 3</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('B1')">
+                <div
+                    class="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">B1</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Bachillerato 1</h3>
+            </div>
+
+            <div class="lesson-card bg-white rounded-2xl p-6 cursor-pointer flex flex-col items-center justify-center text-center h-48"
+                onclick="showLessons('B2')">
+                <div
+                    class="w-16 h-16 rounded-full bg-rose-500 text-white flex items-center justify-center mb-4 shadow-lg">
+                    <span class="text-2xl font-bold">B2</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Bachillerato 2</h3>
+            </div>
+
+        </div>
+
+        <!-- Vista de Lecciones (Oculta por defecto) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="lessonGrid" style="display: none;">
+            <!-- Renderizado dinámicamente desde lessonsData.js -->
+        </div>
     </main>
 
+    <script>
+        let currentActiveGrade = null;
+
+        function showLessons(grade) {
+            currentActiveGrade = grade;
+            const gradeGrid = document.getElementById('gradeGrid');
+            const lessonGrid = document.getElementById('lessonGrid');
+            const searchContainer = document.getElementById('searchContainer');
+            const backButtonContainer = document.getElementById('backButtonContainer');
+            const searchInput = document.getElementById('lessonSearch');
+
+            // Limpiar búsqueda y DOM anterior
+            searchInput.value = '';
+            lessonGrid.innerHTML = '';
+
+            // Ocultar grados
+            gradeGrid.style.display = 'none';
+
+            // Mostrar controles
+            searchContainer.style.display = 'block';
+            backButtonContainer.style.display = 'block';
+            lessonGrid.style.display = 'grid';
+
+            // Obtener array de lecciones de lessonsData.js
+            const gradeLessons = (typeof LESSONS_DATABASE !== 'undefined' && LESSONS_DATABASE[grade])
+                ? LESSONS_DATABASE[grade]
+                : [];
+
+            if (gradeLessons.length === 0) {
+                lessonGrid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-10">No se encontraron lecciones para este grado.</p>';
+            }
+
+            const svgClass = "w-16 h-16 text-white opacity-20 absolute top-4 right-4";
+            const categoryIcons = {
+                "Pensamiento Computacional": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>`,
+                "Creatividad y Diseno Digital": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>`,
+                "Herramientas de Productividad": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`,
+                "Ciudadania Digital": `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>`
+            };
+            const defaultIcon = `<svg class="${svgClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+
+            // Renderizar tarjetas
+            gradeLessons.forEach(lesson => {
+                const titleToDisplay = lesson.title || lesson.id || "Lección";
+                const codeToDisplay = lesson.code || lesson.id;
+                const iconSvg = categoryIcons[lesson.category] || defaultIcon;
+
+                // Construir HTML de tarjeta
+                const cardHTML = `
+                <div class="lesson-card lesson-item bg-white rounded-2xl overflow-hidden cursor-pointer flex flex-col"
+                    data-title="${titleToDisplay.toLowerCase()}" 
+                    data-desc="${lesson.description.toLowerCase()}" 
+                    data-code="${codeToDisplay.toLowerCase()}"
+                    onclick="window.location.href='${lesson.path}'">
+                    
+                    <div class="h-40 brand-gradient p-6 flex flex-col justify-end relative shrink-0">
+                        ${iconSvg}
+                        <div class="mt-auto self-start">
+                            <span class="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block">
+                                ${lesson.unidad}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2 leading-tight">${titleToDisplay}</h3>
+                            <p class="text-slate-600 text-sm mb-4 line-clamp-2">${lesson.description}</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+                            <span class="text-[var(--brand-primary)] font-semibold text-sm">Lección ${codeToDisplay}</span>
+                            <div class="flex items-center text-slate-400 text-xs font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                ${lesson.duracion}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                lessonGrid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        function showGrades() {
+            currentActiveGrade = null;
+            const gradeGrid = document.getElementById('gradeGrid');
+            const lessonGrid = document.getElementById('lessonGrid');
+            const searchContainer = document.getElementById('searchContainer');
+            const backButtonContainer = document.getElementById('backButtonContainer');
+
+            // Mostrar grados
+            gradeGrid.style.display = 'grid';
+
+            // Ocultar todo lo demás
+            searchContainer.style.display = 'none';
+            backButtonContainer.style.display = 'none';
+            lessonGrid.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('lessonSearch');
+            const btnBackToGrades = document.getElementById('btnBackToGrades');
+
+            btnBackToGrades.addEventListener('click', showGrades);
+
+            // Búsqueda en tiempo real
+            searchInput.addEventListener('input', function (e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const allLessonItems = document.querySelectorAll('.lesson-item');
+
+                allLessonItems.forEach(card => {
+                    const title = card.getAttribute('data-title') || '';
+                    const desc = card.getAttribute('data-desc') || '';
+                    const code = card.getAttribute('data-code') || '';
+
+                    if (title.includes(searchTerm) || desc.includes(searchTerm) || code.includes(searchTerm)) {
+                        card.classList.remove('hiding');
+                        setTimeout(() => { card.style.display = ''; }, 50);
+                    } else {
+                        card.classList.add('hiding');
+                        setTimeout(() => { card.style.display = 'none'; }, 300);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
+
 </html>

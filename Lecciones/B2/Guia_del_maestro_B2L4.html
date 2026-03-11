@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía del Maestro P3-L14 - Todos los vehículos son importantes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #636EF7;
+            --brand-secondary: #1E293B;
+            --brand-light: #F1F5F9;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--brand-secondary);
+            background-color: #F8FAFC;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+        .brand-primary-text { color: var(--brand-primary); }
+        .section-icon {
+            background-color: var(--brand-light);
+            color: var(--brand-primary);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+		.accordion {
+  		background-color: #eee;
+  		color: #444;
+  		cursor: pointer;
+  		padding: 18px;
+  		width: 100%;
+ 		border: none;
+ 		text-align: left;
+ 		outline: none;
+  		font-size: 15px;
+ 		transition: 0.4s;
+		}
+
+		.active, .accordion:hover {
+ 		background-color: #ccc;
+		}
+
+		.accordion:after {
+  		content: '\002B';
+  		color: #777;
+  		font-weight: bold;
+  		float: right;
+  		margin-left: 5px;
+		}
+
+		.active:after {
+  		content: "\2212";
+		}
+
+		.panel {
+  		padding: 0 18px;
+  		background-color: white;
+  		max-height: 0;
+  		overflow: hidden;
+ 		transition: max-height 0.2s ease-out;
+		}
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
+
+        <!-- Header -->
+        <header class="mb-8 pb-4 border-b border-slate-200">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-2xl font-bold brand-primary-text">ROBOX<span class="font-light">MAKER</span></h3>
+                    <p class="text-sm text-slate-500">Programa de Robótica Educativa</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold text-slate-700">Lección 4</p>
+                    <p class="text-sm text-slate-500">Bachillerato 2</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Lesson Title -->
+        <div class="text-center mb-10">
+          <h1 class="text-4xl font-bold brand-secondary-text"><strong>Conozcamos el funcionamiento de nuestras manos </strong></h1>
+            <p class="mt-2 text-lg text-slate-600">Unidad 1: <strong>Construyamos palancas</strong></p>
+      </div>
+
+        <!-- General Info Table -->
+        <div class="bg-white p-6 rounded-xl shadow-sm mb-12">
+            <table class="w-full text-left">
+                <tbody>
+                    <tr class="border-b border-slate-200"><td class="py-3 pr-4 font-semibold text-slate-800">Grado:</td><td class="py-3 text-slate-600">Bachillerato 2</td></tr>
+                    <tr class="border-b border-slate-200"><td class="py-3 pr-4 font-semibold text-slate-800">Tiempo Estimado:</td><td class="py-3 text-slate-600">45 minutos</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sections with Icons -->
+        <div class="space-y-10">
+
+              <!-- Competencias e Indicador -->
+            <section class="flex items-start gap-4">
+                <div class="section-icon mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-3">Competencias e Indicador de Logro</h2>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-6 space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-lg brand-primary-text mb-3">Competencias:</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="bg-white p-3 rounded shadow-sm">
+                                  <p class="font-bold text-slate-800">Conceptuales</p>
+                                    <ul class="list-disc list-inside mt-1 text-slate-600 text-left">
+                                      <li>Tendones y ligamentos. Funciones.&nbsp;</li><br>
+                                      <li>Importancia de los tendones de las manos para la movilidad de los dedos. </li>
+<br>
+                                    </ul>
+                                </div>
+                                <div class="bg-white p-3 rounded shadow-sm">
+                                  <p class="font-bold text-slate-800">Procedimentales</p>
+                                    <ul class="list-disc list-inside mt-1 text-slate-600 text-left">
+                                      <li> Identificación y comprensión de las características físicas de las manos.&nbsp;</li><br>
+                                      <li>Establecimiento de la relación e importancia de los tendones y la movilidad de los dedos y las manos.&nbsp;</li><br>
+                                      <li>Aplicación y representación de la funcionabilidad de la mano y su naturaleza, a través de un armado. </li>
+                                    </ul>
+                                </div>
+                                <div class="bg-white p-3 rounded shadow-sm">
+                                  <p class="font-bold text-slate-800">Actitudinales</p>
+                                  <ul class="list-disc list-inside mt-1 text-slate-600 text-left">
+                                    <li>Interés por comprender las características físicas de las manos.&nbsp;</li><br>
+                                    <li>Exactitud al establecer la relación y la importancia de los tendones en la fisionomía de las manos.&nbsp;</li><br>
+                                    <li>Seguridad al desarrollar un armado que represente la funcionalidad de las manos. </li>
+                                  </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-t border-slate-200 pt-4">
+                            <h4 class="font-semibold text-lg brand-primary-text mb-2">Indicador de Logro:</h4>
+                            <p class="text-slate-700">Establece con seguridad la relación entre la anatomía de las extremidades humanas y su función con el mecanismo de algunos robots.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lesson Development -->
+            <section class="flex items-start gap-4">
+                <div class="section-icon mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-3">Desarrollo de la lección</h2>
+                    <div class="space-y-4 text-slate-600">
+                      <div>
+                        <h3 class="font-bold text-lg text-slate-800">✓ Actividades de inicio:</h3>
+                        <p>A través de la dinámica velada o fogón, reúne a los alumnos en un solo grupo, para que dialoguen sobre la funcionabilidad de las extremidades. Qué partes del cuerpo permiten la movilidad de las extremidades, cuál es el nivel de complejidad en la composición y formación de cada una de estas y cómo la humanidad ha avanzado en la representación de este sistema de movilidad.</p>
+                        </div>
+                      <div>
+                        <h3 class="font-bold text-lg text-slate-800">Desarrollo:</h3>
+                          <ol class="list-decimal list-inside space-y-2">
+                            <li>Explica el papel fundamental que juegan los tendones y ligamentos en la funcionalidad y movilidad de los dedos de las manos y pies. Si consideras oportuno, puedes valerte de la siguiente información: Anatómicamente, las manos son muy complejas, pues están constituidas por alrededor de 31 huesos (divididos en carpo, metacarpianos y falanges). Las puntas de los dedos son de las regiones con más terminaciones nerviosas; además, son las partes del cuerpo que nos permiten interactuar con el exterior. Hay una característica que vuelve única a la mano y es que los dedos pulgares son totalmente oponibles, no como en el caso de los simios o koalas, que a pesar de tener una especie de pulgar no es del todo oponible. Ahora bien, las manos no poseen músculos grandes, como en el caso de los brazos y piernas, pero pese a ello pueden sostener objetos con mucho peso o ejercer fuerza con mucha seguridad. ¿A qué se debe? Para ello, se ocupan tendones, que son como “cuerdas” que comunican el movimiento de los dedos con los músculos ubicados en el antebrazo. <br><br>Pregúntales: ¿Te imaginas de qué tamaño serían nuestros dedos si cada uno de ellos tuviera músculos? Posiblemente, su grosor y longitud serían totalmente diferentes. Mientras que los ligamentos permiten que los huesos permanezcan unidos, los tendones son tejidos que conectan los huesos con los músculos, y así permiten a nuestros dedos ser como son.&nbsp;</li>
+                            <li>Proyecto 1: Indica a los alumnos que realicen el armado para esta lección, que corresponde a una garra. </li>
+                          </ol>
+                        </div>
+                      <div>
+                        <h3 class="font-bold text-lg text-slate-800">➤ Actividades de culminación:</h3>
+                        <p>A partir de la información que les has explicado sobre la composición de la mano, pregúntales qué relación de semejanza pueden observar entre la garra que han armado y el funcionamiento de la mano con sus tendones, ligamentos y dedos oponibles.</p>
+                      </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Materials -->
+            <section class="flex items-start gap-4">
+                <div class="section-icon mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                </div>
+              <div>
+                <h2 class="text-2xl font-bold mb-2">Recursos didácticos:</h2>
+                  <ul class="list-disc list-inside text-slate-600 space-y-1">
+                    <li>Guión de clase y modelo en 3D que elaborarán. </li>
+                    <li>Kit de robótica.&nbsp;</li>
+                    <li>Imágenes de la mano con sus tendones y ligamentos. </li>
+                  </ul>
+                </div>
+            </section>
+			
+			<!-- Cuento section 
+            <section>
+				 <div class="flex items-start gap-4">
+                	<div class="section-icon mt-1">
+                  		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+               		</div>
+					<div>
+                        <h2 class="text-2xl font-bold">Cuento</h2>
+                    </div>
+                </div>
+              <button class="accordion">Click aquí para leer el cuento</button>
+				<div class="panel">
+  					<p><strong>Los castorcitos constructores</strong><br> 
+						<br>En un pueblo lejano, vivían dos hermanos castores que se dedicaban a construir. Diariamente, para llegar a su trabajo debían atravesar un río caudaloso, pero ya que eran excelentes nadadores, no lo veían como inconveniente. 
+						<br>Muchos los envidiaban, porque, a pesar de ser tan diferentes, jamás discutían, eran unidos y se ayudaban mutuamente en sus labores. Su cordialidad se debía a que desde muy pequeños perdieron a su padre, y su madre muy enferma era la única familia que tenían.  
+						<br>Cierto día, al regresar a casa, encontraron en el río una silueta muy extraña. Se trataba de un viejo mago. <i>“Tengo un premio para el que, usando su astucia, me ayude a cruzar el río”</i> les dijo a los hermanos. El mayor de ellos preguntó muy desconfiado de qué se trataba el premio que prometía. El mago les explicó que les cumpliría un deseo, sin importar lo que fuera, siempre y cuando lo hicieran llegar al otro lado sano y salvo.
+						<br>El más pequeño de los dos pensó que, de ser el ganador, pediría tener muchísimo dinero, para poder pagar un buen médico a su madre, pero también para comprarse su propia casa, viajar a tierras lejanas y dejar de trabajar como constructor. Con esta motivación, corrió hasta el pueblo en busca de una cuerda tan fuerte que resistiera el peso de él y del mago. 
+						<br>Mientras su hermano regresaba, el castor mayor pensó que sería mucho más seguro construir un puente, uno con madera fuerte que sirviera no solo al mago, sino a los demás animales del pueblo que desearan cruzar, sobre todo en época de lluvia, cuando el río crecía más y más.
+						<br>Luego de pensarlo, ¡puso manos a la obra! Taló árboles grandes con sus dientes, para que la madera soportara muchos años. 
+						<br>El hermano menor llegó agitado, escaló hasta un gran árbol de pino, aseguró la cuerda, cruzó el río e hizo lo mismo con el otro extremo. <i>“¡Está listo! Pasaremos juntos por la cuerda. La puse tan alta que incluso un gigante podría atravesar el río sin mojarse los dedos”</i> aseguró. Desafortunadamente, uno de los pinos estaba tan viejo que en cuanto el mago intentó cruzar, se cayó golpeando todo lo que estaba a su paso. 
+						<br><i>“Deben saber una cosa -dijo el mago, molesto por lo que había ocurrido- que cada uno tiene una oportunidad para hacerme cruzar. De no lograrlo la primera vez, jamás volveré a hacerles esta oferta”.</i>
+						El castorcito se sintió tan triste por no poder lograr su meta que en el momento se puso a llorar. Su hermano mayor, al ver esto, le propuso que juntos construyeran el puente y de esa manera el deseo que pidieran al mago fuera de beneficio para ambos…<br><br>
+
+
+						<strong>Actividad para realizar en casa:</strong><br>
+						Los niños descargarán el esquema con las piezas del kit para aprenderse el nombre y el color de cada una.
+						</p>
+				</div>
+            </section> -->
+
+			
+			<!-- Actividad en casa section  -->
+            <section class="flex items-start gap-4">
+                <div class="section-icon mt-1">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </div>
+              <div>
+                <h2 class="text-2xl font-bold mb-2">Actividad para realizar en casa:</h2>
+                  <ul class="list-disc list-inside text-slate-600 space-y-1">
+                    <li>Los alumnos diseñarán un armado que asemeje a una extremidad humana o animal.</li>
+                  </ul>
+                </div>
+            </section> 
+
+
+          <!-- Modelo a construir Section -->
+            <section>
+                <div class="flex items-start gap-4">
+                    <div class="section-icon mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">Modelo a construir</h2>
+                    </div>
+                </div>
+                <div class="bg-white p-2 rounded-xl shadow-sm mt-4">
+                    <iframe src="../Primaria1/Visor3D.html" 
+							class="w-full h-[500px] border-0 rounded-lg" 
+							title="Visor 3D del modelo a construir"
+							allowfullscreen>  Tu navegador no soporta iframes o el contenido no está disponible.
+					</iframe>
+                </div>
+            </section>   
+			
+
+        </div>
+<script>
+var acc = document.getElementsByClassName("accordion");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+  acc[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var panel = this.nextElementSibling;
+    if (panel.style.maxHeight) {
+      panel.style.maxHeight = null;
+    } else {
+      panel.style.maxHeight = panel.scrollHeight + "px";
+    } 
+  });
+}
+</script>
+        <!-- Separator Line -->
+        <div class="mt-12 mb-8 border-b border-slate-200"></div>
+
+        <!-- Copyright Footer -->
+        <footer class="text-center text-sm text-slate-500 pb-4">
+            <p class="font-semibold">© 2026 Roboxmaker. Todos los derechos reservados.</p>
+            <p class="mt-1">Este material es para uso exclusivo de instituciones afiliadas al Programa de Robótica Educativa de Roboxmaker.</p>
+        </footer>
+
+    </div>
+</body>
+</html>
+
