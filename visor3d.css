@@ -1,0 +1,246 @@
+/* --- GUÍA DE ESTILO ROBOXMAKER --- */
+:root {
+    --brand-primary: #636EF7;
+    --brand-secondary: #1E293B;
+    --brand-light: #F1F5F9;
+    --brand-dark: #0F172A;
+    --brand-primary-darker: #4f58d6;
+    --danger-red: #ef4444;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--brand-dark);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+header {
+    background-color: white;
+    padding: 12px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--brand-primary);
+    font-size: 24px;
+    margin: 0;
+}
+
+#viewer-container {
+    flex-grow: 1;
+    position: relative;
+    min-height: 0;
+    background-color: var(--brand-light);
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#view-controls {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+.control-btn {
+    background-color: rgba(241, 245, 249, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--brand-secondary);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #e2e8f0;
+}
+
+.control-btn:hover:not(:disabled) {
+    background-color: white;
+}
+
+.control-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.control-btn svg {
+    width: 24px;
+    height: 24px;
+    transition: all 0.2s ease-in-out;
+}
+
+.ui-button {
+    background-color: rgba(241, 245, 249, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--brand-secondary);
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.ui-button:hover {
+    background-color: white;
+}
+
+#viewcube-container {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 8px;
+    position: relative;
+    cursor: grab;
+    transition: all 0.2s ease-in-out;
+}
+
+#viewcube-container:active {
+    cursor: grabbing;
+}
+
+#explode-slider-container {
+    display: none;
+    background-color: rgba(241, 245, 249, 0.9);
+    padding: 8px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+#explode-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 120px;
+    height: 8px;
+    background: #d1d5db;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+#explode-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--brand-primary);
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+#fullscreen-btn {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 10;
+}
+
+#loader-indicator {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+/* Media Queries para responsividad del menú */
+@media (max-height: 750px) {
+    #view-controls {
+        gap: 6px;
+    }
+
+    #viewcube-container {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 6px;
+    }
+
+    .control-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .control-btn svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    #explode-slider-container {
+        padding: 6px 10px;
+    }
+
+    #explode-slider {
+        width: 100px;
+    }
+}
+
+@media (max-height: 600px) {
+    #view-controls {
+        gap: 4px;
+        top: 8px;
+        left: 8px;
+    }
+
+    #viewcube-container {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 4px;
+    }
+
+    .control-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .control-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    #explode-slider-container {
+        padding: 4px 8px;
+    }
+
+    #explode-slider {
+        width: 80px;
+    }
+}
+
+.control-btn.active {
+    color: var(--brand-primary);
+    border-color: var(--brand-primary);
+    background-color: white;
+}
